@@ -1,0 +1,390 @@
+const express = require('express');
+const pool = require('../pool.js');
+var router = express.Router();        //创建空路由
+
+
+// 功能一、（uid+uname）用户信息检验接口↓
+router.post('/IdentityCheck', (req, res) => {
+  var obj = req.body;
+
+  var $uname = obj.uname;                //昵称
+  var $uid = obj.uid;                    //ID
+
+  if (!$uname) {
+    res.send({ code: 401, msg: '昵称不可为空 -`д´-' });
+    return;
+  }
+  if (!$uid) {
+    res.send({ code: 402, msg: 'uid不可为空 ┐(´д`)┌' });
+    return;
+  }
+  var sql = "SELECT `uid` FROM `user_info` WHERE `uname`= ? AND `uid`=?";
+  pool.query(sql, [$uname, $uid], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      res.send({ code: 200, msg: '验证通过(๑•̀ㅂ•́)و✧' });
+    } else {
+      res.send({ code: 301, msg: '验证未通过，请尝试重新登陆( ｀д′)' });
+    }
+  })
+})
+// 功能一、（uid+uname）用户信息检验接口↑
+
+// 功能二、首页内容————全部标签加载（分页）↓ (首页默认加载的内容)
+router.get('/all', (req, res) => {
+  var obj = req.query;                 //获取get请求数据
+  var $uid = obj.uid;                  //uid
+  var pageIndex = obj.pageIndex;       //当前页码
+  var pageSize = 12;                   //页大小12
+  var pageCount = 1;                   //总页数
+  var cardCount = 1;
+  var speedOfProgress = 0;             //查询进度
+  var obj = { code: 200 };              //用于存储返回值
+
+  if (!$uid) {
+    res.send({ code: 401, msg: "身份验证失败，请重新登录 ( ´ﾟДﾟ`)" });
+    return;
+  }
+  if (!pageIndex) {                      //如果页码为空，默认第一页
+    pageIndex = 1;
+  }
+  // if(!pageSize){pageSize = 12;}
+
+  //2:验证正则表达式
+  var reg = /^[0-9]{1,}$/;
+  if (!reg.test(pageIndex)) {
+    res.send({ code: 401, msg: "页码格式不正确 (╯￣Д￣)╯╘═╛" });
+    return;
+  }
+  // if(!reg.test(pageSize)){
+  //   res.send({code:402,msg:"页大小格式不正确"});
+  //   return;
+  // }
+
+  // 聚合函数求和
+  var sql = "SELECT count(wid) AS pageCount FROM web WHERE uid=?";
+  pool.query(sql, [$uid], (err, result) => {
+    if (err) throw err;
+    // console.log('当前用户网站总个数',result);
+    // 总页数 = 内容数量/页大小
+    pageCount = Math.ceil(result[0].pageCount / pageSize);
+    cardCount = result[0].pageCount;
+    obj.cardCount = cardCount;                     //卡片总数量
+    obj.pageCount = pageCount;
+    speedOfProgress += 50;                         //sql执行进度
+    if (speedOfProgress == 100) {
+      res.send(obj);
+    }
+  });
+
+
+  var sql = "SELECT `wangzhan`, `imgurl`, `yuming`, `jianjie`, `wid` FROM web WHERE uid=? limit ?,?";
+  pool.query(sql, [$uid, (pageIndex - 1) * pageSize, pageSize], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      speedOfProgress += 50;                         //sql执行进度
+      if (speedOfProgress == 100) {
+        obj.result = result
+        res.send(obj);
+      }
+
+    } else {
+      obj.code = 301;
+      obj.msg = '您还没有添加任何网站 ๑乛◡乛๑'
+      res.send(obj);
+    }
+  })
+
+})
+// 功能二、首页内容————全部标签加载（分页）↑ (首页默认加载的内容)
+
+// 功能三、首页分类栏的的动态加载↓
+router.get('/class', (req, res) => {
+  var obj = req.query;                 //获取get请求数据
+  var $uid = obj.uid;                   //uid
+  if (!$uid) {
+    res.send({ code: 401, msg: "身份验证失败，请重新登录 ( ´ﾟДﾟ`)" });
+    return;
+  }
+  var sql = 'SELECT `class`, `cid` FROM `class` WHERE `uid`=?';
+  pool.query(sql, [$uid], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      res.send({ code: 200, msg: '分类信息获取成功', result });
+    } else {
+      res.send({ code: 301, msg: '您还没有创建任何分类' });
+    }
+
+  })
+})
+// 功能三、首页分类栏的的动态加载↑
+
+// 功能四、卡片位置的交换↓
+router.post('/swop', (req, res) => {
+
+  var obj = req.body;
+
+  var $wid1 = obj.wid1;
+  var $wid2 = obj.wid2;
+
+  if (!$wid1 || !$wid2) {
+    send({ code: 666, msg: '失败' })
+    return
+  }
+  // console.log('交换接口收到数据',$wid1,$wid2);
+
+  var widCtn1 = null;     // 用于存储1返回的内容
+  var widCtn2 = null;     // 用于存储2返回的内容
+
+  var progress = 0;       // 用于存储进度
+
+  var sql = 'SELECT * FROM `web` WHERE `wid`=?';
+  var sql2 = 'UPDATE `web` SET `uid`=?,`wangzhan`=?,`imgurl`=?,`yuming`=?,`jianjie`=?,`guanjianzi`=? WHERE wid=?';
+
+
+  function query () {       //查询 查询 查询 查询
+    return new Promise(function (open, error) {
+
+      pool.query(sql, [$wid1], (err, result) => {
+        if (err) throw err;
+        if (result.length > 0) {
+          widCtn1 = result[0];   //存入变量1
+          console.log('内容存入的变量1', widCtn1);
+
+          progress += 25;
+          if (progress == 50) {
+            open();
+          }
+
+        } else {
+          res.send({ code: 301, msg: '发生未知错误，请不要篡改内存 ( ｀д′)' });
+        }
+      })
+
+      pool.query(sql, [$wid2], (err, result) => {
+        if (err) throw err;
+        if (result.length > 0) {
+          widCtn2 = result[0];    //存入变量2
+          console.log('内容存入的变量2', widCtn2);
+
+          progress += 25;
+          if (progress == 50) {
+            open();
+          }
+
+        } else {
+          res.send({ code: 301, msg: '发生未知错误，请不要篡改内存 ( ｀д′)' });
+        }
+      })
+
+    })
+  }
+
+  function update () {       //更新 更新 更新 更新
+    return new Promise(function (open, error) {
+
+      pool.query(sql2, [widCtn2.uid, widCtn2.wangzhan, widCtn2.imgurl, widCtn2.yuming, widCtn2.jianjie, widCtn2.guanjianzi, $wid1], (err, result) => {  //2的内容给1
+        if (err) throw err;
+        //判断是否更改成功
+        if (result.affectedRows > 0) {
+          progress += 25;
+          if (progress == 100) {
+            res.send({ code: 200, msg: '标签位置更改还成功' });
+          }
+        } else {
+          //如果progress==100说明另一个已经改了，这个失败了在改回去，否则会丢失一个网站的信息 - -
+          res.send({ code: 301, msg: '标签位置更换失败失败' });
+
+        }
+      })
+
+      pool.query(sql2, [widCtn1.uid, widCtn1.wangzhan, widCtn1.imgurl, widCtn1.yuming, widCtn1.jianjie, widCtn1.guanjianzi, $wid2], (err, result) => {  //1的内容给2
+        if (err) throw err;
+        //判断是否更改成功
+        if (result.affectedRows > 0) {
+          progress += 25;
+          if (progress == 100) {
+            res.send({ code: 200, msg: '标签位置更改还成功' });
+          }
+        } else {
+          //如果progress==100说明另一个已经改了，这个失败了在改回去，否则会丢失一个网站的信息 - -
+          res.send({ code: 301, msg: '标签位置更换失败失败' });
+
+        }
+      })
+
+
+    })
+  }
+
+  (async function () {
+    try {
+      await query();
+      await update();
+    } catch (errMsg) {
+      console.log(errMsg);
+    }
+  })();
+
+})
+// 功能四、卡片位置的交换↑
+
+
+// 功能五、卡片内容的修改↓
+router.post('/cardUpdate', (req, res) => {
+  var obj = req.body;
+
+  var $wid = obj.wid;
+  var $yuming = obj.yuming;
+  var $wangzhan = obj.wangzhan;
+  var $jianjie = obj.jianjie;
+
+  // var sql = 'UPDATE `web` SET `uid`=?,`wangzhan`=?,`imgurl`=?,`yuming`=?,`jianjie`=?,`guanjianzi`=? WHERE wid=?';  //留给爬虫用
+  var sql2 = 'UPDATE `web` SET `wangzhan`=?,`yuming`=?,`jianjie`=? WHERE wid=?';   //备选
+
+  pool.query(sql2, [$wangzhan, $yuming, $jianjie, $wid], (err, result) => {
+    if (err) throw err;
+
+    if (result.affectedRows > 0) {
+      res.send({ code: 200, msg: '卡片内容修改成功 (๑•̀ㅂ•́)و✧' });
+    } else {
+      res.send({ code: 401, msg: '卡片内容修改失败 ┑(￣Д ￣)┍' });
+    }
+  })
+
+})
+// 功能五、卡片内容的修改↓
+
+
+// 功能六、卡片的删除↓
+router.post('/cardDelete', (req, res) => {
+  var obj = req.body;
+  var $wid = obj.wid;
+  var $uid = obj.uid;
+  var sql = 'DELETE FROM web WHERE wid=? AND uid=?';
+  pool.query(sql, [$wid, $uid], (err, result) => {
+    if (err) throw err;
+    if (result.affectedRows > 0) {
+      res.send({ code: 200, msg: '删除成功' });
+    } else {
+      res.send({ code: 401, msg: '删除失败' });
+    }
+
+  })
+
+})
+// 功能六、卡片的删除↑
+
+
+// 功能七、向分类中添加卡片↓
+router.post('/classCardAdd', (req, res) => {
+  var obj = req.body;
+  var $cid = obj.cid;
+  var $uid = obj.uid;
+  var $fk_wid = obj.wid;         //就是wid防止重名时多表查询报错
+
+  var sql = `INSERT INTO class_details VALUES (NULL,?,?,?)`;
+  //'INSERT INTO `class_details` SET cid=? wid=?';
+  pool.query(sql, [$cid, $uid, $fk_wid], (err, result) => {
+    if (err) throw err;
+    // console.log(result);
+    //是否添加成功
+    if (result.affectedRows > 0) {
+      res.send({ code: 200, msg: '添加成功 []~(￣▽￣)~*' });
+    }
+  });
+})
+// 功能七、向分类中添加卡片↑
+
+
+// 先检查用户身份信息，后查询
+// 功能八、分类的分页、多表查询↓
+router.get('/classDetail', (req, res) => {
+  var obj = req.query;
+  var $uid = obj.uid;
+  var $cid = obj.cid;
+  var $pageIndex = Math.ceil(obj.pageIndex);      //当前页码
+  console.log('index', obj.pageIndex);
+  var pageSize = 12;                              //页大小12
+
+  var pageCount = 1;                              //总页数
+  var cardCount = 1;                              //查询的卡片数量总和
+  var speedOfProgress = 0;                        //查询进度
+  var obj2 = { code: 200, msg: '信息获取成功' };      //用于存储返回值
+  var error = true;
+  if (!$uid) {
+    res.send({ code: 401, msg: "身份验证失败，请重新登录 ( ´ﾟДﾟ`)" });
+    return;
+  }
+  if (!$cid) {
+    res.send({ code: 402, msg: "请勿篡改内存 ヽ(#`Д´)ﾉ" });
+    return;
+  }
+  if (!$pageIndex) {
+    $pageIndex = 1;
+  }
+
+
+  var sql = `SELECT * FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=? AND class_details.cid=? LIMIT ?,?`; //多表查询+条件过滤+分页 需要四个条件过滤：uid cid 分页：当前页 最大页
+  pool.query(sql, [$uid, $cid, ($pageIndex - 1) * pageSize, pageSize], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+
+      speedOfProgress += 50;
+
+      obj2.result = result;
+
+      if (speedOfProgress == 100) {
+        res.send(obj2);
+      }
+    } else {
+      if (error) {
+        obj2.code = 301;
+        obj2.msg = '该分类还没有添加任何网址 (๑•́ ₃ •̀๑)';
+        error = false;
+        res.send(obj2);
+      }
+
+    }
+  });
+
+
+  var sql2 = `SELECT count(wid) AS cardCount FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=? AND class_details.cid=? LIMIT ?,?`;
+  pool.query(sql2, [$uid, $cid, ($pageIndex - 1) * pageSize, pageSize], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      console.log(result);
+
+      speedOfProgress += 50;
+
+      cardCount = result[0].cardCount;                  //查询的卡片数量总和
+      pageCount = Math.ceil(cardCount / pageSize);        //总页数
+
+      obj2.cardCount = cardCount;                         //卡片总和
+      obj2.pageCount = pageCount;                         //总页数
+
+      if (speedOfProgress == 100) {
+        res.send(obj2);
+      }
+    } else {
+      if (error) {
+        obj2.code = 301;
+        obj2.msg = '该分类还没有添加任何网址 ╮(╯_╰)╭';
+        error = false;
+        res.send(obj2);
+      }
+    }
+  });
+
+});
+/*
+`select * from web INNER JOIN class_details ON fk_wid=wid`  //跨表查询 排除笛卡尔积后 的全部数据
+`SELECT * FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=1 AND class_details.cid=1`       //对结果进行条件uid cid（安右侧class_details）过滤之后的数据
+`SELECT * FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=1 AND class_details.cid=1 LIMIT 0,1`    //多表查询+条件过滤+分页 需要四个条件过滤：uid cid 分页：当前页 最大页
+*/
+// 功能八、分类的分页、多表查询↑
+
+
+
+//导出路由器
+module.exports = router;
