@@ -57,16 +57,15 @@ server.use(bodyParser.json()); // 使用querystring解析数据
 
 
 // 验证token 中间件
-// const auth = function(req, res, next) {
-//   console.log(req.session)
-//   console.log(req.sessionId)
-//   console.log(req.session.admin)
-//   if (req.session && req.session.user === "amy" && req.session.admin)
-//     return next();
-//   else
-//     return res.sendStatus(401);
-// };
-// server.use(auth)
+const auth = function(req, res, next) {
+  // if (req.session && req.session.user === "amy" && req.session.admin)
+    // return next();
+  console.log('请求头', req.headers)
+  return next();
+  // else
+  //   return res.sendStatus(401);
+};
+server.use(auth)
 
 
 server.use('/user', user); // 用户模块

@@ -1,7 +1,6 @@
-//引入上一级目录下的mysql连接池对象
+const express = require('express');
 const pool = require('../pool.js'); // 数据库 连接池
 const email = require('../email');
-const express = require('express');
 const main = require('../main.js'); // 工具类
 
 
@@ -36,19 +35,18 @@ router.post('/login', (req, res) => {
   } else {
     sql = 'SELECT * FROM user_info WHERE userName=? AND password=md5(?)'
   }
-
   //执行SQL语句，查看是否登录成功（使用用户名和密码两个条件能查询到数据）
   pool.query(sql, [field, password], (err, result) => {
     if (err) throw err;
     //判断查询的结果（数组）长度是否大于0 大于0，说明查询到数据，有这个用户登录成功
 
-    req.session.token = Math.random().toString(36).substr(2)
+    let token = main.token.create(result[0])
 
     if (result.length > 0) {
-      req.session.userName = result[0].userName;               //uid uname存入session中
-      req.session.userId = result[0].userId;
+      // req.session.userName = result[0].userName;               //uid uname存入session中
+      // req.session.userId = result[0].userId;
 
-      res.send({ code: 0, msg: '欢迎回家', result, token: req.session.token });
+      res.send({ code: 0, msg: '欢迎回家', result, token });
     } else {
       res.send({ code: 1, msg: '账号或密码错误' });
     }

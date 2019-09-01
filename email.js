@@ -3,7 +3,7 @@ const main = require('./main');
 
 
 const forgetPassword = function (email) {
-  let randomStr = main.randomStr(4)
+  let randomStr = main.random.str(4)
 
   let transporter = nodemailer.createTransport({
     // host: 'smtp.ethereal.email',
@@ -21,7 +21,7 @@ const forgetPassword = function (email) {
     to: `${email}`, // list of receivers 收件人
     subject: '静逸导航 账户密码重置', // Subject line 标题
     // 发送text或者html格式
-    // text: 'Hello 我是火星黑洞', // plain text body
+    // text: '邮件内容', // plain text body
     html: `
       <p>
         静逸导航 修改密码 验证码为:

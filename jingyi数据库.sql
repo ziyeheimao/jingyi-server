@@ -12,27 +12,34 @@ CREATE TABLE user_info(
     userName VARCHAR(32) UNIQUE,                            #用户昵称唯一约束
     password VARCHAR(128) NOT NULL,                         #密码 md5散列算法 不可为空
 
-    occupation VARCHAR(50),                                 #工作 按类型编码  9位数 前三位行业 中三位职业 后三位岗位 不清楚的位默认000
+    occupationCode VARCHAR(9),                              #职业代码 按类型编码  9位数 前三位行业 中三位职业 后三位岗位 不清楚的位默认000
+    occupationName VARCHAR(50),                             #职业名称 按类型编码  9位数 前三位行业 中三位职业 后三位岗位 不清楚的位默认000
 
     provinceCode VARCHAR(6),                                #省级代码
     cityCode VARCHAR(6),                                    #市级代码
     regionCode VARCHAR(6),                                  #区县代码
+
+    provinceName VARCHAR(32),                               #省级名称
+    cityName VARCHAR(32),                                   #市级名称
+    regionName VARCHAR(32),                                 #区县名称
+
     sex TINYINT,                                            #性别布尔值 0保密 1男 2女
-    picUrl VARCHAR(512)                                     #头像地址
+    userPicUrl VARCHAR(512),                                #头像地址
+    cache VARCHAR(128)                                      #缓存 session local 时间戳 默认值:(时间戳) 1000*60*60*8
 );
 
 
 #向用户表插入数据
 INSERT INTO user_info VALUES
-(NULL,"819405241@qq.com","15231291161","箫",md5("4869"),'程序员',NULL,NULL,NULL,1,"http://127.0.0.1:777/userPic/1Pic.gif"),
-(NULL,"819405242@qq.com","15231291162","筱竹听雨",md5("4869"),'医生',NULL,NULL,NULL,2,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405243@qq.com","15231291163","子夜黑猫",md5("4869"),'会计',NULL,NULL,NULL,2,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405244@qq.com","15231291164","箫羽叶",md5("4869"),'裁缝',NULL,NULL,NULL,0,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405245@qq.com","15231291165","战神无双",md5("4869"),NULL,NULL,NULL,NULL,0,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405246@qq.com","15231291166","麦克斯韦的妖精",md5("4869"),NULL,NULL,NULL,NULL,2,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405247@qq.com","15231291167","棍+球=糖葫芦",md5("4869"),NULL,NULL,NULL,NULL,2,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405248@qq.com","15231291168","halihali",md5("4869"),NULL,NULL,NULL,NULL,0,"http://127.0.0.1:777/userPic/userPic.png"),
-(NULL,"819405249@qq.com","15231291169","bilibili",md5("4869"),NULL,NULL,NULL,NULL,0,"http://127.0.0.1:777/userPic/userPic.png");
+(NULL,"819405241@qq.com","15231291161","箫",md5("4869"),NULL,'程序员',NULL,NULL,NULL,NULL,NULL,NULL,1,"http://127.0.0.1:666/userPic/1Pic.gif",28800000),
+(NULL,"819405242@qq.com","15231291162","筱竹听雨",md5("4869"),NULL,'医生',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405243@qq.com","15231291163","子夜黑猫",md5("4869"),NULL,'会计',NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405244@qq.com","15231291164","箫羽叶",md5("4869"),NULL,'裁缝',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405245@qq.com","15231291165","战神无双",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405246@qq.com","15231291166","麦克斯韦的妖精",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405247@qq.com","15231291167","棍+球=糖葫芦",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405248@qq.com","15231291168","halihali",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405249@qq.com","15231291169","bilibili",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000);
 
 
 #网址表 由用户提交
@@ -124,14 +131,14 @@ INSERT INTO web VALUES                                      #以后有由户自�
 
 #标题类别表
 CREATE TABLE class(
-    classId INT PRIMARY KEY AUTO_INCREMENT,           #类别ID 用于存储 分类类别名 主键自增
-    userId INT,                                       #用户ID 关联用户ID表
-    class VARCHAR(10),                                #分类名称 最长10个字符
-    FOREIGN KEY(userId) REFERENCES user_info(userId)  #外键
+    classId INT PRIMARY KEY AUTO_INCREMENT,                 #类别ID 用于存储 分类类别名 主键自增
+    userId INT,                                             #用户ID 关联用户ID表
+    class VARCHAR(10),                                      #分类名称 最长10个字符
+    FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
 );
 
 
-INSERT INTO class VALUES                              #以后有由户自行插入数据
+INSERT INTO class VALUES                                    #以后有由户自行插入数据
 (NULL,1,'前端'),
 (NULL,1,'设计'),
 (NULL,1,'工具'),
@@ -144,13 +151,13 @@ INSERT INTO class VALUES                              #以后有由户自行插�
 
 #类别详情表
 CREATE TABLE class_details(
-    detailsId INT PRIMARY KEY AUTO_INCREMENT,         #类别详情ID 用于存储 当前分类下的网址ID 主键自增 (多表查询：去web表查找没对应ID)
-    classId INT,                                      #类别ID
-    userId INT,                                       #用户ID 关联用户ID表
-    fk_webId INT,                                     #对应网址表ID
-    FOREIGN KEY(userId) REFERENCES user_info(userId), #外键
-    FOREIGN KEY(classId) REFERENCES class(classId),   #外键
-    FOREIGN KEY(fk_webId) REFERENCES web(webId)       #外键
+    detailsId INT PRIMARY KEY AUTO_INCREMENT,               #类别详情ID 用于存储 当前分类下的网址ID 主键自增 (多表查询：去web表查找没对应ID)
+    classId INT,                                            #类别ID
+    userId INT,                                             #用户ID 关联用户ID表
+    fk_webId INT,                                           #对应网址表ID
+    FOREIGN KEY(userId) REFERENCES user_info(userId),       #外键
+    FOREIGN KEY(classId) REFERENCES class(classId),         #外键
+    FOREIGN KEY(fk_webId) REFERENCES web(webId)             #外键
 );
 
 
@@ -180,8 +187,8 @@ INSERT INTO class_details VALUES
 
 
 #验证码表
-CREATE TABLE verificationCode(
-    verificationCodeId INT PRIMARY KEY AUTO_INCREMENT,      #用户id主键+自增
+CREATE TABLE verification_code(
+    verificationCodeId INT PRIMARY KEY AUTO_INCREMENT,      #验证码id主键+自增
     userId INT,                                             #用户ID 关联用户ID表
 
     verificationCode VARCHAR(4) NOT NULL,                   #四位验证码
@@ -191,5 +198,13 @@ CREATE TABLE verificationCode(
 
 
 
+#token_date表
+CREATE TABLE token_date(
+    tokenDateId INT PRIMARY KEY AUTO_INCREMENT,             #用户id主键+自增
+    userId INT,                                             #用户ID 关联用户ID表
 
+    timeStamp VARCHAR(4) NOT NULL,                          #token到期时 时间戳
+
+    FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
+)
 
