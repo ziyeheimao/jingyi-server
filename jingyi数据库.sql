@@ -203,7 +203,7 @@ CREATE TABLE token_date(
     tokenDateId INT PRIMARY KEY AUTO_INCREMENT,             #用户id主键+自增
     userId INT,                                             #用户ID 关联用户ID表
 
-    timeStamp VARCHAR(4) NOT NULL,                          #token到期时 时间戳
+    timeStamp BIGINT NOT NULL,                              #token到期时 时间戳
 
     FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
 )

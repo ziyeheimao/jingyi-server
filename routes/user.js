@@ -43,9 +43,6 @@ router.post('/login', (req, res) => {
     let token = main.token.create(result[0])
 
     if (result.length > 0) {
-      // req.session.userName = result[0].userName;               //uid uname存入session中
-      // req.session.userId = result[0].userId;
-
       res.send({ code: 0, msg: '欢迎回家', result, token });
     } else {
       res.send({ code: 1, msg: '账号或密码错误' });
@@ -172,17 +169,81 @@ router.get('/verificationCode', (req, res) => {
   } else if (main.reg.phone.test(field)) { // 如果是手机 短信验证
     console.log('短信验证')
     res.send({ code: 400, msg: '手机修改密码接口仍在开发中,请使用邮箱修改密码...' });
+  } else {
+    res.send({ code: 1, msg: '手机或邮箱格式不正确'})
   }
 })
 // 功能四、获取验证码 ↑
 
 
 // 功能五、忘记密码 ↓
-router.post('/forgetPassword', (req, res) => {
+router.put('/forgetPassword', (req, res) => {
   var obj = req.body; //获取post请求的数据
-  res.send({ code: 400, msg: '接口仍在开发中...' });
+  var field = obj.field; //手机或邮箱
+  var password = obj.password; //新密码
+  var verificationCode = obj.verificationCode
+
+  // 封装 更新函数
+  var update = function (field, password) {
+    let sql = 'UPDATE user_info SET password=md5(?) WHERE '
+
+    if (main.reg.email.test(field)) {
+      sql += 'email=?'
+    } else if (main.reg.phone.test(field)) {
+      sql += 'phone=?'
+    } else {
+      res.send({ code: -1, msg: 'field 格式不正确'});
+    }
+
+    pool.query(sql, [password, field], (err, result) => {
+      if (err) throw err;
+      if (result.affectedRows > 0) {
+        res.send({ code: 0, msg: '密码修改成功' });
+      } else {
+        res.send({ code: -1, msg: '密码修改失败' });
+      }
+    })
+  }
+
+  if (!field) {
+    res.send({ code: -1, msg: 'field 不可为空' });
+    return;
+  }
+  if (!password) {
+    res.send({ code: -1, msg: 'password 不可为空' });
+    return;
+  }
+  if (!verificationCode) {
+    res.send({ code: -1, msg: 'verificationCode 不可为空' });
+    return;
+  }
+
+  main.verificationCode.vali(field).then(resolve => {
+    if (resolve.valid === true) {
+      if (resolve.result[0].verificationCode === verificationCode) {
+        update(field, password)
+      } else {
+        res.send({ code: -1, msg: '验证码错误' })
+      }
+    } else if (resolve.valid === false) {
+      res.send({ code: -1, msg: '验证码已过期' })
+    }
+  })
 })
 // 功能五、忘记密码 ↑
+
+
+
+
+
+
+
+
+
+//分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线
+
+
+
 
 
 // 功能六、更改用户信息 ↓

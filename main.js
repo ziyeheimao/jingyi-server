@@ -53,7 +53,32 @@ const random = {
 
 // 验证码
 const verificationCode = {
-  // 检测该邮箱对应的userId是否有验证码
+  // 检测邮箱 手机 用户名对应的userId是否有验证码
+  vali: function (field) {
+    return new Promise((resolve, reject) => {
+
+      if (reg.email.test(field)) {
+        sql = 'SELECT verificationCode FROM verification_code WHERE userId=(SELECT userId FROM user_info WHERE email=?)'
+      } else if (reg.phone.test(field)) {
+        sql = 'SELECT verificationCode FROM verification_code WHERE userId=(SELECT userId FROM user_info WHERE phone=?)'
+      } else {
+        sql = 'SELECT verificationCode FROM verification_code WHERE userId=(SELECT userId FROM user_info WHERE userName=?)'
+      }
+      
+      pool.query(sql, [field], (err, result) => {
+        if (err) throw err;
+        //判断查询的结果（数组）长度是否大于0 大于0，说明查询到数据，有这个用户登录成功
+        if (result.length > 0) {
+          resolve({valid: true, result})
+        } else {
+          resolve({valid: false})
+        }
+      });
+
+    })
+  },
+
+  // 检测该userId是否有验证码
   valid: function (userId) {
     return new Promise((resolve, reject) => {
       let sql = 'SELECT * FROM verification_code WHERE userId=?'
@@ -110,17 +135,19 @@ const token = {
     let token = userId.padStart(6, random.letter(6)) + Math.random().toString(36).substr(2);
 
     // 根据返回的用户信息中的设置 计算token时间戳
-    let timeStamp = (new Date()).valueOf() + user.cache; // 获取当前毫秒的时间戳，准确！
-    console.log('时间戳',(new Date()).valueOf(),user.cache,(new Date()).valueOf() + user.cache)
+    let timeStamp = null
+    if (user.cache === 'session') {
 
+    } else if (user.cache === 'local') {
+
+    } else {
+      timeStamp = Number((new Date()).valueOf()) + Number(user.cache); // 获取当前毫秒的时间戳
+    }
 
     this._valid(userId).then(validRes => {
-      console.log('是否有token', validRes)
-      if (validRes === true) { // 已有token
-        // 更新 token
-        this._upData(userId)
-      } else if (validRes === false) { // 没有token
-        // 创建 token
+      if (validRes === true) { // 已有token // 更新 token
+        this._upData(userId, timeStamp)
+      } else if (validRes === false) { // 没有token // 创建 token
         this._add(userId, timeStamp) // uid + 时间戳存数据库
       }
     })
@@ -133,7 +160,6 @@ const token = {
       let sql = 'SELECT * FROM token_date WHERE userId=?'
       pool.query(sql, [userId], (err, result) => {
         if (err) throw err;
-
         let validRes = null // 检测结果
   
         if (result.length > 0) {
@@ -169,7 +195,6 @@ const token = {
       // }
     })
   },
-
   // 把token还原成uid
   toUserId: function (token) {
     token = token.substr(0, 6)
@@ -188,11 +213,6 @@ const token = {
 
 // 时间
 const date = {
-  // var t = (new Date()).valueOf()
-  // console.log('获取时间戳', t)
-  // var t2 = t + 1000 * 60 *3
-  // console.log('加token时间后', t2)
-
   // 时间戳转 时间格式
   timetrans: function (date) {
     var date = new Date(date);                                                                     // 转时间类型
@@ -204,8 +224,6 @@ const date = {
     var s = (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());                // 秒
     return Y + M + D + h + m + s;
   }
-
-  // console.log('还原时间戳', timetrans(t), timetrans(t2))
 }
 module.exports = {
   host,

@@ -60,10 +60,11 @@ server.use(bodyParser.json()); // 使用querystring解析数据
 const auth = function(req, res, next) {
   // if (req.session && req.session.user === "amy" && req.session.admin)
     // return next();
-  console.log('请求头', req.headers)
-  return next();
   // else
   //   return res.sendStatus(401);
+
+  // console.log('请求头', req.headers)
+  return next();
 };
 server.use(auth)
 
