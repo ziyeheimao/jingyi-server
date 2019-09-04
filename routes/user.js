@@ -240,7 +240,7 @@ router.put('/forgetPassword', (req, res) => {
 
 
 
-//分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线
+// 分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线
 
 
 
@@ -427,39 +427,6 @@ router.get('/detail', (req, res) => {
   })
 })
 // 功能九、用户检索接口 —— 用户信息修改/管理页面的用户原信息↑
-
-
-// 功能十、找回密码接口↓
-router.post('/retrieveUpwd', (req, res) => {
-  var obj = req.body;
-  var $uname = obj.uname;  //昵称
-  var $email = obj.email;  //邮箱
-  var $upwd = obj.upwd;    //新密码
-  //非空检测
-  if (!$uname) {
-    res.send({ code: 401, msg: '昵称不可为空(。_。)' });
-    return;
-  }
-  if (!$email) {
-    res.send({ code: 402, msg: '邮箱不可为空( ‵▽′)ψ' });
-    return;
-  }
-  if (!$upwd) {
-    res.send({ code: 403, msg: '新密码不可为空(＠_＠;)' });
-    return;
-  }
-  //修改密码
-  pool.query("UPDATE user_info SET upwd=MD5(?) WHERE uname=?", [$upwd, $uname], (err, result) => {
-    if (err) throw err;
-    //判断是否更改成功
-    if (result.affectedRows > 0) {
-      res.send({ code: 200, msg: '密码修改成功 φ(゜▽゜*)♪' });
-    } else {
-      res.send({ code: 302, msg: '密码修改失败 X﹏X' });
-    }
-  });
-})
-// 功能十、找回密码接口↑
 
 
 // 功能十一、词云图

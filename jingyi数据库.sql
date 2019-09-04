@@ -151,8 +151,8 @@ INSERT INTO class VALUES                                    #以后有由户自�
 
 #类别详情表
 CREATE TABLE class_details(
-    detailsId INT PRIMARY KEY AUTO_INCREMENT,               #类别详情ID 用于存储 当前分类下的网址ID 主键自增 (多表查询：去web表查找没对应ID)
-    classId INT,                                            #类别ID
+    detailsId INT PRIMARY KEY AUTO_INCREMENT,               #分类详情ID 用于存储 当前分类下的网址ID 主键自增 (多表查询：去web表查找没对应ID)
+    classId INT,                                            #分类ID
     userId INT,                                             #用户ID 关联用户ID表
     fk_webId INT,                                           #对应网址表ID
     FOREIGN KEY(userId) REFERENCES user_info(userId),       #外键
