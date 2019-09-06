@@ -58,16 +58,30 @@ server.use(bodyParser.json()); // 使用querystring解析数据
 
 // 验证token 中间件
 const auth = function(req, res, next) {
-  // if (req.session && req.session.user === "amy" && req.session.admin)
-    // return next();
-  // else
-  //   return res.sendStatus(401);
+  // console.log(req.url)
+  let token = req.headers.token
+  let url = req.url // 获取用户访问的接口
 
-  // console.log('请求头', req.headers)
+  console.log(!token, main.adoptPath.includes(url))
+  // 检测是否携带token
+  if (!token && main.adoptPath.includes(url)) { // 没有token 且不在不携带token可访问的范围内
+    res.send({code: 1001, msg: 'token错误,请重新登录'})
+    return
+  }
+
+  // 检测token是否过期
+
   return next();
 };
-server.use(auth)
 
+// 验证用户权限
+const power = function (req, res, next) {
+  console.log('验证权限')
+  return next();
+}
+
+server.use(auth) // 自定义中间件 token
+server.use(power) // 自定义中间件 权限
 
 server.use('/user', user); // 用户模块
 server.use('/ctn', ctn); // 内容模块

@@ -6,6 +6,7 @@ const pool = require('./pool.js'); // 数据库 连接池
 
 const host = '127.0.0.1' // 数据库ip
 const corsHost = ['127.0.0.1', 'localhost'] // 跨域白名单 ip 域名
+const adoptPath = ['/user/login', '/user/checkUserNamePhoneEmail', '/user/register', '/user/verificationCode', '/user/forgetPassword'] // 无需携带token即可访问的 路由
 
 // 正则
 const reg = {
@@ -228,6 +229,7 @@ const date = {
 module.exports = {
   host,
   corsHost,
+  adoptPath,
   reg,
   random,
   verificationCode,
