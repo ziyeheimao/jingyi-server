@@ -133,20 +133,21 @@ INSERT INTO web VALUES                                      #以后有由户自�
 CREATE TABLE class(
     classId INT PRIMARY KEY AUTO_INCREMENT,                 #类别ID 用于存储 分类类别名 主键自增
     userId INT,                                             #用户ID 关联用户ID表
-    class VARCHAR(10),                                      #分类名称 最长10个字符
+    className VARCHAR(10),                                  #分类名称 最长10个字符
+    sort INT,                                               #显示顺序
     FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
 );
 
 
 INSERT INTO class VALUES                                    #以后有由户自行插入数据
-(NULL,1,'前端'),
-(NULL,1,'设计'),
-(NULL,1,'工具'),
-(NULL,1,'音乐'),
-(NULL,1,'视频'),
-(NULL,1,'小说'),
-(NULL,1,'游戏'),
-(NULL,1,'其他');
+(NULL,1,'前端',1),
+(NULL,1,'设计',2),
+(NULL,1,'工具',3),
+(NULL,1,'音乐',4),
+(NULL,1,'视频',5),
+(NULL,1,'小说',6),
+(NULL,1,'游戏',7),
+(NULL,1,'其他',8);
 
 
 #类别详情表

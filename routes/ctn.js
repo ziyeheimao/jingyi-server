@@ -7,15 +7,34 @@ var router = express.Router();        //创建空路由
 
 // 功能一、新增分类↓
 router.post('/class/add', (req, res) => {
+  let obj = req.body; // 获取post请求的数据
+  let className = obj.className;
+  if (!className) {
+    res.send({ code: -1, msg: 'className不可为空' });
+  }
+  let userId = main.token.toUserId(req.headers.token)
 
+  var sql = `INSERT INTO class VALUES (NULL,?,?)`;
+  pool.query(sql, [userId, className], (err, result) => {
+    if (err) throw err;
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
+    } else {
+      res.send({ code: 1, msg: '添加失败 (,,•́ . •̀,,)' });
+    }
+  });
 })
 // 功能一、新增分类↑
 
 // 功能二、删除分类↓
 router.delete('/class/del', (req, res) => {
   var obj = req.query;
-  let classId = obj.classId
-  let userId = obj.userId
+  let classId = obj.classId;
+  if (!classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+  }
+  let userId = main.token.toUserId(req.headers.token)
+
   var sql = 'DELETE FROM `class` WHERE classId=? AND userId=?';
   pool.query(sql, [classId, userId], (err, result) => {
     if (err) throw err;
@@ -30,26 +49,36 @@ router.delete('/class/del', (req, res) => {
 
 // 功能三、修改分类↓
 router.put('/class/updata', (req, res) => {
+  let obj = req.body; // 获取post请求的数据
+  let className = obj.className;
+  if (!className) {
+    res.send({ code: -1, msg: 'className不可为空' });
+  }
+  let classId = obj.classId;
+  if (!classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+  }
+  let userId = main.token.toUserId(req.headers.token)
 
+  var sql = 'UPDATE `class` SET `className`=? WHERE userId=? AND classId=?';   //备选
+  pool.query(sql, [className, userId, classId], (err, result) => {
+    if (err) throw err;
+
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '分类修改成功 (๑•̀ㅂ•́)و✧' });
+    } else {
+      res.send({ code: 1, msg: '分类修改失败 ┑(￣Д ￣)┍' });
+    }
+  })
 })
 // 功能三、修改分类↑
 
 // 功能四、获取分类↓
 router.get('/class/get', (req, res) => {
-  // var obj = req.query;
-
-  // console.log(req.headers.token)
   let token = req.headers.token
-
-  if (!token) {
-    res.send({code: 400, msg: 'token过期'})
-    return
-  }
-
   let userId = main.token.toUserId(token)
-  console.log('userId:', userId)
 
-  var sql = "SELECT * FROM `class` WHERE `userId`=?";
+  var sql = "SELECT * FROM `class` WHERE `userId`=? ORDER BY sort ASC";
   pool.query(sql, [userId], (err, result) => {
     if (err) throw err;
     res.send({code: 0, result})

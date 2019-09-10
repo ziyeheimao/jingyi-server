@@ -1,7 +1,7 @@
 // 包
 const express = require('express'); // 服务器模块
 const cors = require('cors');  // cors跨域
-const session = require('express-session'); // session会话状态
+// const session = require('express-session'); // session会话状态
 const bodyParser = require('body-parser'); // 解析post请求主体
 
 // 工具类
@@ -37,14 +37,14 @@ server.use(cors({
 }));
 
 // 使用 session 中间件
-server.use(session({
-  secret: 'secret', // 对session id相关的cookie进行签名
-  resave: true, // 强制保存，如果session没有被修改也要重新保存
-  saveUninitialized: false, // 是否保存为初始化的会话
-  cookie: {
-    maxAge: 1000 * 60 * 3 // 设置session的有效时间，单位毫秒
-  }
-}));
+// server.use(session({
+//   secret: 'secret', // 对session id相关的cookie进行签名
+//   resave: true, // 强制保存，如果session没有被修改也要重新保存
+//   saveUninitialized: false, // 是否保存为初始化的会话
+//   cookie: {
+//     maxAge: 1000 * 60 * 3 // 设置session的有效时间，单位毫秒
+//   }
+// }));
 
 // 托管静态资源到public目录下
 server.use(express.static('public'));
@@ -53,35 +53,11 @@ server.use(express.static('public'));
 // server.use(bodyParser.urlencoded({
 //   extnded: false // 使用querystring解析数据
 // }));
-server.use(bodyParser.json()); // 使用querystring解析数据
+server.use(bodyParser.json()); // 使用querystring解析post请求主体数据
 
-
-// 验证token 中间件
-const auth = function(req, res, next) {
-  // console.log(req.url)
-  let token = req.headers.token
-  let url = req.url // 获取用户访问的接口
-
-  console.log(!token, main.adoptPath.includes(url))
-  // 检测是否携带token
-  if (!token && main.adoptPath.includes(url)) { // 没有token 且不在不携带token可访问的范围内
-    res.send({code: 1001, msg: 'token错误,请重新登录'})
-    return
-  }
-
-  // 检测token是否过期
-
-  return next();
-};
-
-// 验证用户权限
-const power = function (req, res, next) {
-  console.log('验证权限')
-  return next();
-}
-
-server.use(auth) // 自定义中间件 token
-server.use(power) // 自定义中间件 权限
+// 中间件
+server.use(main.middleware.token) // 自定义中间件 token
+server.use(main.middleware.power) // 自定义中间件 权限
 
 server.use('/user', user); // 用户模块
 server.use('/ctn', ctn); // 内容模块

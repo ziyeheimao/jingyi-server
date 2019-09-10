@@ -168,7 +168,7 @@ router.get('/verificationCode', (req, res) => {
     })
   } else if (main.reg.phone.test(field)) { // 如果是手机 短信验证
     console.log('短信验证')
-    res.send({ code: 400, msg: '手机修改密码接口仍在开发中,请使用邮箱修改密码...' });
+    res.send({ code: 1002, msg: '手机修改密码接口仍在开发中,暂时不可用,请使用邮箱修改密码...' });
   } else {
     res.send({ code: 1, msg: '手机或邮箱格式不正确'})
   }
