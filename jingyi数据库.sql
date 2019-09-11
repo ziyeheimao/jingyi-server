@@ -134,20 +134,22 @@ CREATE TABLE class(
     classId INT PRIMARY KEY AUTO_INCREMENT,                 #类别ID 用于存储 分类类别名 主键自增
     userId INT,                                             #用户ID 关联用户ID表
     className VARCHAR(10),                                  #分类名称 最长10个字符
-    sort INT,                                               #显示顺序
+    sort VARCHAR(1024),                                     #显示顺序
     FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
 );
 
 
 INSERT INTO class VALUES                                    #以后有由户自行插入数据
-(NULL,1,'前端',1),
-(NULL,1,'设计',2),
-(NULL,1,'工具',3),
-(NULL,1,'音乐',4),
-(NULL,1,'视频',5),
-(NULL,1,'小说',6),
-(NULL,1,'游戏',7),
-(NULL,1,'其他',8);
+(NULL,1,'前端','1.0'),
+(NULL,1,'设计','2.0'),
+(NULL,1,'工具','3.0'),
+(NULL,1,'音乐','4.0'),
+(NULL,1,'视频','5.0'),
+(NULL,1,'小说','6.0'),
+(NULL,1,'游戏','7.0'),
+(NULL,1,'其他','8.0'),
+(NULL,2,'游戏','9.0'),
+(NULL,2,'工作','10.0');
 
 
 #类别详情表

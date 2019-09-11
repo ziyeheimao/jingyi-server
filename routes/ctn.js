@@ -14,15 +14,59 @@ router.post('/class/add', (req, res) => {
   }
   let userId = main.token.toUserId(req.headers.token)
 
-  var sql = `INSERT INTO class VALUES (NULL,?,?)`;
-  pool.query(sql, [userId, className], (err, result) => {
-    if (err) throw err;
-    if (result.affectedRows > 0) {
-      res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
-    } else {
-      res.send({ code: 1, msg: '添加失败 (,,•́ . •̀,,)' });
-    }
-  });
+  let max = null
+
+  const _get = function () {
+    return new Promise((resolve, reject) => {
+      // let sql2 = 'SELECT sort FROM class ORDER BY sort ASC' // (class表)查所有sort 并排序
+      let sql = 'SELECT sort FROM class'
+      pool.query(sql, [], (err, result) => {
+        if (err) throw err;
+
+        let arr = []
+        for (let i of result) {
+          arr.push(parseFloat(i.sort))
+        }
+        arr = arr.sort((a,b) => {
+          return a-b
+        })
+
+        max = arr[arr.length - 1] + ''
+        let index = max.indexOf('.')
+        if (index === -1) { // 整数的处理
+          max = Number(max); // 转数字
+          max++;
+          max += '.0'; // 拼接尾巴随便转回字符串
+        } else { // 小数的处理
+          max = max.split('.')[0] // 取整数部分
+          max++;
+          max += '.0'
+        }
+        resolve()
+      })
+    })
+  }
+
+  const _add = function () {
+    return new Promise((resolve, reject) => {
+      let sql = `INSERT INTO class VALUES (NULL,?,?,?)`;
+      pool.query(sql, [userId, className, max], (err, result) => {
+        if (err) throw err;
+        if (result.affectedRows > 0) {
+          res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
+        } else {
+          res.send({ code: 1, msg: '添加失败 (,,•́ . •̀,,)' });
+        }
+      });
+      resolve()
+    })
+  }
+
+  const _async = async function () {
+    await _get();
+    await _add();
+  }
+  _async()
 })
 // 功能一、新增分类↑
 
@@ -78,7 +122,7 @@ router.get('/class/get', (req, res) => {
   let token = req.headers.token
   let userId = main.token.toUserId(token)
 
-  var sql = "SELECT * FROM `class` WHERE `userId`=? ORDER BY sort ASC";
+  var sql = "SELECT * FROM `class` WHERE `userId`=?"; // ORDER BY sort ASC
   pool.query(sql, [userId], (err, result) => {
     if (err) throw err;
     res.send({code: 0, result})
