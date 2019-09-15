@@ -220,7 +220,12 @@ router.put('/forgetPassword', (req, res) => {
 
   main.verificationCode.vali(field).then(resolve => {
     if (resolve.valid === true) {
-      if (resolve.result[0].verificationCode === verificationCode) {
+      // console.log(resolve.result[0].verificationCode, verificationCode, resolve.result[0].verificationCode.toUpperCase(), verificationCode.toUpperCase())
+      if (!resolve.result[0].verificationCode) {
+        res.send({ code: -1, msg: '验证码已过期' })
+        return
+      }
+      if (resolve.result[0].verificationCode.toUpperCase() === verificationCode.toUpperCase()) {
         update(field, password)
       } else {
         res.send({ code: -1, msg: '验证码错误' })

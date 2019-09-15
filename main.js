@@ -235,7 +235,7 @@ const date = {
 const middleware = {
   token: function(req, res, next) {
     let token_ = req.headers.token
-    let url = req.url // 获取用户访问的接口
+    let url = req._parsedUrl.pathname // url // 获取用户访问的接口
     let process = 0 // 进度
     let userSetTimeStamp = null // 用户设置的token时效 时间戳
     let expireTimeStamp = null // 本次登录到期时间戳
@@ -319,7 +319,7 @@ const middleware = {
   },
 
   power: function (req, res, next) {
-    console.log('验证用户权限写这里:', req.token, req.url)
+    console.log('验证用户权限写这里:', req.token, req._parsedUrl.pathname)
     return next();
   }
 }

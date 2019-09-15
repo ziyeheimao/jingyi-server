@@ -104,7 +104,7 @@ router.put('/class/updata', (req, res) => {
   }
   let userId = main.token.toUserId(req.headers.token)
 
-  var sql = 'UPDATE `class` SET `className`=? WHERE userId=? AND classId=?';   //备选
+  var sql = 'UPDATE `class` SET `className`=? WHERE userId=? AND classId=?';   // 备选
   pool.query(sql, [className, userId, classId], (err, result) => {
     if (err) throw err;
 
@@ -133,10 +133,33 @@ router.get('/class/get', (req, res) => {
 // 功能五、交换分类位置↓
 router.put('/class/exchange', (req, res) => {
   let obj = req.body; // 获取post请求的数据
-  let classId1 = obj.classId1;
-  let classId2 = obj.classId2;
-  let classname1 = obj.classname1;
-  let classname2 = obj.classname2;
+
+  let sort1 = obj.sort1
+  let sort2 = obj.sort2
+
+  let classId1 = obj.classId1
+  let classId2 = obj.classId2
+
+  let token = req.headers.token
+  let userId = main.token.toUserId(token)
+
+  // console.log(sort1, sort2, classId1, classId2)
+  // console.log(typeof sort1, typeof sort2, typeof classId1, typeof classId2)
+  var sql2 = `UPDATE class 
+  SET sort = CASE classId 
+  WHEN ? THEN ? 
+  WHEN ? THEN ? 
+  END 
+  WHERE classId IN (?,?) AND userId=? `
+
+  pool.query(sql2, [classId1, sort2, classId2, sort1, classId1, classId2, userId], (err, result) => {
+    if (err) throw err;
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '分类位置修改成功 (๑•̀ㅂ•́)و✧' });
+    } else {
+      res.send({ code: 1, msg: '分类位置修改失败 ┑(￣Д ￣)┍' });
+    }
+  })
 })
 // 功能五、交换分类位置↑
 

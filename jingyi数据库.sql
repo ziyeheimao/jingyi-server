@@ -46,11 +46,11 @@ INSERT INTO user_info VALUES
 CREATE TABLE web(
     webId INT PRIMARY KEY AUTO_INCREMENT,                   #网址表ID 主键+自增
     userId INT,                                             #用户ID
-    wangzhan VARCHAR(256),                                  #网站名
-    imgurl VARCHAR(1024),                                   #网站logo图片链接 图片服务器
-    yuming VARCHAR(1024),                                   #域名
-    jianjie VARCHAR(1024),                                  #网站简介
-    guanjianzi VARCHAR(1024),                               #关键字
+    webName VARCHAR(256),                                   #网站名
+    webImgUrl VARCHAR(1024),                                #网站logo图片链接 图片服务器
+    webUrl VARCHAR(1024),                                   #域名
+    description VARCHAR(1024),                              #网站简介
+    keyword VARCHAR(1024),                                  #关键字
     FOREIGN KEY(userId) REFERENCES user_info(userId)        #外键
 );
 
