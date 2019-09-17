@@ -236,6 +236,12 @@ const middleware = {
   token: function(req, res, next) {
     let token_ = req.headers.token
     let url = req._parsedUrl.pathname // url // 获取用户访问的接口
+    console.log(url)
+
+    if (url.indexOf('/ctnPic') !== -1) { // 访问静态资源时直接通过
+      return next()
+    }
+
     let process = 0 // 进度
     let userSetTimeStamp = null // 用户设置的token时效 时间戳
     let expireTimeStamp = null // 本次登录到期时间戳
@@ -319,7 +325,7 @@ const middleware = {
   },
 
   power: function (req, res, next) {
-    console.log('验证用户权限写这里:', req.token, req._parsedUrl.pathname)
+    // console.log('验证用户权限写这里:', req.token, req._parsedUrl.pathname)
     return next();
   }
 }
