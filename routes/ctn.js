@@ -190,17 +190,9 @@ router.get('/card/get', (req, res) => {
   let userId = main.token.toUserId(token)
 
   let reqObj = req.query;
-  let page = Number(reqObj.page);           // 当前页码
-  let limit = Number(reqObj.limit);         // 页大小 每页多少条
-  let classId = Number(reqObj.classId);     // 分类Id
-
-  let pageCount = 1;                        // 总页数
-  let cardCount = 1;                        // 总条数
-  let speedOfProgress = 0;                  // 查询进度
-
-  let obj = {} // 返回内容
-
-  console.log(page, limit, classId, userId)
+  let page = Number(reqObj.page); // 当前页码
+  let limit = Number(reqObj.limit);                           // 页大小 每页多少条
+  let classId = Number(reqObj.classId);                       // 分类Id
 
   if (!page) {
     res.send({ code: -1, msg: 'page不可为空' });
@@ -211,6 +203,13 @@ router.get('/card/get', (req, res) => {
     return
   }
 
+  page = main.transform.page(page, limit)
+
+  let pageCount = 1;                                          // 总页数
+  let cardCount = 1;                                          // 总条数
+  let speedOfProgress = 0;                                    // 查询进度
+  let obj = { code: 0 } // 返回内容
+
   let validSpeedOfProgress = function () { // 检测进度
     speedOfProgress += 50;
     if (speedOfProgress == 100) {
@@ -220,8 +219,8 @@ router.get('/card/get', (req, res) => {
   }
 
   if (classId) { // 有classId跨表查当前用户当前分类
-    console.log('有classId', classId)
-    let sql = `SELECT * FROM card INNER JOIN class_details ON fk_webId=webId WHERE class_details.userId=? AND class_details.classId=? LIMIT ?,?`; // 多表查询 + 条件过滤 + 分页 需要四个条件过滤: userId classId 分页：当前页 最大页
+    let sql = `SELECT * FROM card INNER JOIN class_details ON fk_webId=webId 
+    WHERE class_details.userId=? AND class_details.classId=? LIMIT ?,?`; // 多表查询 + 条件过滤 + 分页 需要四个条件过滤: userId classId 分页：当前页 最大页
     pool.query(sql, [userId, classId, page, limit], (err, result) => {
       if (err) throw err;
 
@@ -231,7 +230,8 @@ router.get('/card/get', (req, res) => {
       }
     })
 
-    let sql2 = `SELECT count(webId) AS pageCount FROM card INNER JOIN class_details ON fk_webId=webId WHERE class_details.userId=? AND class_details.classId=?`; // 求和
+    let sql2 = `SELECT count(webId) AS pageCount FROM card INNER JOIN class_details ON fk_webId=webId 
+    WHERE class_details.userId=? AND class_details.classId=?`; // 求和
     pool.query(sql2, [userId, classId], (err, result) => {
       if (err) throw err;
 
@@ -246,13 +246,9 @@ router.get('/card/get', (req, res) => {
       }
     })
   } else { // 无classId查当前用户全部
-    console.log('无classId', classId)
     let sql = `SELECT * FROM card WHERE userId=? LIMIT ?,?`
-
     pool.query(sql, [userId, page, limit], (err, result) => {
       if (err) throw err;
-
-
       obj.data = result
 
       if (validSpeedOfProgress()) {
@@ -274,7 +270,6 @@ router.get('/card/get', (req, res) => {
         res.send(obj);
       }
     })
-
   }
 })
 // 功能六、获取卡片↑

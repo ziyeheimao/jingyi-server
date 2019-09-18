@@ -369,6 +369,12 @@ const user = {
   }
 }
 
+// 转换数据
+const transform = {
+  page: function (page, limit) {
+    return (page - 1) * limit
+  }
+}
 
 module.exports = {
   host,
@@ -379,5 +385,6 @@ module.exports = {
   verificationCode,
   token,
   date,
-  middleware
+  middleware,
+  transform
 }
