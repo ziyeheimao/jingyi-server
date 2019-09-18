@@ -238,7 +238,7 @@ const middleware = {
     let url = req._parsedUrl.pathname // url // 获取用户访问的接口
     console.log(url)
 
-    if (url.indexOf('/ctnPic') !== -1) { // 访问静态资源时直接通过
+    if (url.indexOf('/static') !== -1) { // 访问静态资源时直接通过
       return next()
     }
 
@@ -324,6 +324,7 @@ const middleware = {
     }
   },
 
+  // 用户权限
   power: function (req, res, next) {
     // console.log('验证用户权限写这里:', req.token, req._parsedUrl.pathname)
     return next();

@@ -49,11 +49,11 @@ server.use(cors({
 // 托管静态资源到public目录下
 server.use(express.static('public'));
 
-// body-parser配置
-// server.use(bodyParser.urlencoded({
+// body-parser配置 
+// server.use(bodyParser.urlencoded({ // 解析原生表单 post请求主体数据
 //   extnded: false // 使用querystring解析数据
 // }));
-server.use(bodyParser.json()); // 使用querystring解析post请求主体数据
+server.use(bodyParser.json()); // 解析axios(json格式) post请求主体数据
 
 // 中间件
 server.use(main.middleware.token) // 自定义中间件 token

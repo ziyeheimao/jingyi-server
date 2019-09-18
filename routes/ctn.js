@@ -5,12 +5,14 @@ const main = require('../main.js'); // 工具类
 
 var router = express.Router();        //创建空路由
 
+// 分类 ---------------------------------------------------------------------
 // 功能一、新增分类↓
 router.post('/class/add', (req, res) => {
   let obj = req.body; // 获取post请求的数据
   let className = obj.className;
   if (!className) {
     res.send({ code: -1, msg: 'className不可为空' });
+    return
   }
   let userId = main.token.toUserId(req.headers.token)
 
@@ -76,6 +78,7 @@ router.delete('/class/del', (req, res) => {
   let classId = obj.classId;
   if (!classId) {
     res.send({ code: -1, msg: 'classId不可为空' });
+    return
   }
   let userId = main.token.toUserId(req.headers.token)
 
@@ -97,10 +100,12 @@ router.put('/class/updata', (req, res) => {
   let className = obj.className;
   if (!className) {
     res.send({ code: -1, msg: 'className不可为空' });
+    return
   }
   let classId = obj.classId;
   if (!classId) {
     res.send({ code: -1, msg: 'classId不可为空' });
+    return
   }
   let userId = main.token.toUserId(req.headers.token)
 
@@ -163,6 +168,121 @@ router.put('/class/exchange', (req, res) => {
 })
 // 功能五、交换分类位置↑
 
+// 卡片 ---------------------------------------------------------------------
+// 功能六、新增卡片↓
+router.post('/card/add', (req, res) => {
+})
+// 功能六、新增卡片↑
+
+// 功能六、删除卡片↓
+router.delete('/card/del', (req, res) => {
+})
+// 功能六、删除卡片↑
+
+// 功能六、修改卡片↓
+router.put('/card/updata', (req, res) => {
+})
+// 功能六、修改卡片↑
+
+// 功能六、获取卡片↓
+router.get('/card/get', (req, res) => {
+  let token = req.headers.token
+  let userId = main.token.toUserId(token)
+
+  let reqObj = req.query;
+  let page = Number(reqObj.page);           // 当前页码
+  let limit = Number(reqObj.limit);         // 页大小 每页多少条
+  let classId = Number(reqObj.classId);     // 分类Id
+
+  let pageCount = 1;                        // 总页数
+  let cardCount = 1;                        // 总条数
+  let speedOfProgress = 0;                  // 查询进度
+
+  let obj = {} // 返回内容
+
+  console.log(page, limit, classId, userId)
+
+  if (!page) {
+    res.send({ code: -1, msg: 'page不可为空' });
+    return
+  }
+  if (!limit) {
+    res.send({ code: -1, msg: 'limit不可为空' });
+    return
+  }
+
+  let validSpeedOfProgress = function () { // 检测进度
+    speedOfProgress += 50;
+    if (speedOfProgress == 100) {
+      return true
+    }
+    return false
+  }
+
+  if (classId) { // 有classId跨表查当前用户当前分类
+    console.log('有classId', classId)
+    let sql = `SELECT * FROM card INNER JOIN class_details ON fk_webId=webId WHERE class_details.userId=? AND class_details.classId=? LIMIT ?,?`; // 多表查询 + 条件过滤 + 分页 需要四个条件过滤: userId classId 分页：当前页 最大页
+    pool.query(sql, [userId, classId, page, limit], (err, result) => {
+      if (err) throw err;
+
+      obj.data = result
+      if (validSpeedOfProgress()) {
+        res.send(obj);
+      }
+    })
+
+    let sql2 = `SELECT count(webId) AS pageCount FROM card INNER JOIN class_details ON fk_webId=webId WHERE class_details.userId=? AND class_details.classId=?`; // 求和
+    pool.query(sql2, [userId, classId], (err, result) => {
+      if (err) throw err;
+
+      pageCount = Math.ceil(result[0].pageCount / limit);
+      cardCount = result[0].pageCount;
+
+      obj.cardCount = cardCount;                     // 卡片总数量
+      obj.pageCount = pageCount;                     // 总页数
+
+      if (validSpeedOfProgress()) {
+        res.send(obj);
+      }
+    })
+  } else { // 无classId查当前用户全部
+    console.log('无classId', classId)
+    let sql = `SELECT * FROM card WHERE userId=? LIMIT ?,?`
+
+    pool.query(sql, [userId, page, limit], (err, result) => {
+      if (err) throw err;
+
+
+      obj.data = result
+
+      if (validSpeedOfProgress()) {
+        res.send(obj);
+      }
+    })
+
+    let sql2 = `SELECT count(webId) AS pageCount FROM card WHERE userId=?`
+    pool.query(sql2, [userId], (err, result) => {
+      if (err) throw err;
+
+      pageCount = Math.ceil(result[0].pageCount / limit);
+      cardCount = result[0].pageCount;
+
+      obj.cardCount = cardCount;                     // 卡片总数量
+      obj.pageCount = pageCount;                     // 总页数
+
+      if (validSpeedOfProgress()) {
+        res.send(obj);
+      }
+    })
+
+  }
+})
+// 功能六、获取卡片↑
+
+// 功能六、交换卡片位置↓
+router.put('/card/exchange', (req, res) => {
+})
+// 功能六、交换卡片位置↑
 // 分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线
 
 
