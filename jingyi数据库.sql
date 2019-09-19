@@ -160,7 +160,7 @@ CREATE TABLE class_details(
     fk_webId INT,                                           #对应网址表ID
     FOREIGN KEY(userId) REFERENCES user_info(userId),       #外键
     FOREIGN KEY(classId) REFERENCES class(classId),         #外键
-    FOREIGN KEY(fk_webId) REFERENCES card(webId)             #外键
+    FOREIGN KEY(fk_webId) REFERENCES card(webId)            #外键
 );
 
 

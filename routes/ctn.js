@@ -1,7 +1,8 @@
 const express = require('express');
 const pool = require('../pool.js');
 const main = require('../main.js'); // 工具类
-
+const file = require('../file.js'); // 文件模块
+const worm = require('../worm.js'); // 爬虫模块
 
 var router = express.Router();        //创建空路由
 
@@ -169,22 +170,94 @@ router.put('/class/exchange', (req, res) => {
 // 功能五、交换分类位置↑
 
 // 卡片 ---------------------------------------------------------------------
-// 功能六、新增卡片↓
+// 功能六、新增卡片 json形式↓
 router.post('/card/add', (req, res) => {
-})
-// 功能六、新增卡片↑
+  let userId = main.token.toUserId(req.headers.token)
 
-// 功能六、删除卡片↓
+  let obj = req.body; // 获取post请求的数据
+
+  let classId = obj.classId // 分类Id
+  let webUrl = obj.webUrl // 域名
+
+  let description = obj.description // 简介
+  let webImgUrl = obj.webImgUrl // LOGO图片链接
+  let webName = obj.webName // 网页名称
+
+  if (classId !== 0 && !classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+    return
+  }
+  if (!webUrl) {
+    res.send({ code: -1, msg: 'webUrl不可为空' });
+    return
+  }
+
+  let data = { userId, classId, webUrl, description, webImgUrl, webName }
+
+
+  // 查找刚添加的卡片的webId
+  let webId = ''
+  _get = function () {
+    return new Promise((open, err) => {
+      let sql = `SELECT webId FROM card WHERE userId=? AND webUrl=?`;
+      pool.query(sql, [userId, webUrl], (err, result) => {
+        if (err) throw err;
+        webId = result[0].webId
+        open()
+      })
+    })
+  }
+
+  // 添加分类
+  _addClass = function () {
+    let sql = `INSERT INTO class_details VALUES (NULL,?,?,?)`;
+    pool.query(sql, [classId, userId, webId], (err, result) => {
+      if (err) throw err;
+      if (result.affectedRows > 0) {
+        res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
+      } else {
+        res.send({ code: 1, msg: '添加失败 w( ゜Д ゜)w' });
+      }
+    });
+  }
+
+  async = async function () {
+    await _get()
+    await _addClass()
+  }
+
+  worm.crawlWeb(data).then(res => {
+    console.log('爬虫模块结束', res)
+  })
+  // if (worm.crawlWeb(data)) { // 需要添加分类
+  //   // 1.查刚刚添加的web
+  //   // 2.添加分类 send
+  //   console.log('爬虫模块结束,添加分类')
+  //   async()
+  // } else { // 不需要添加分类
+  //   console.log('爬虫模块结束,不添加分类')
+  //   // 直接send
+  //   res.send({code: 0, msg: '添加成功 []~(￣▽￣)~*'})
+  // }
+
+})
+// 功能六、新增卡片 json形式↑
+
+// 功能七、新增卡片 文件形式↓
+// /ctn/card/upload -------------------------------------------------------------------------------------
+// 功能七、新增卡片 文件形式↑
+
+// 功能八、删除卡片↓
 router.delete('/card/del', (req, res) => {
 })
-// 功能六、删除卡片↑
+// 功能八、删除卡片↑
 
-// 功能六、修改卡片↓
+// 功能九、修改卡片↓
 router.put('/card/updata', (req, res) => {
 })
-// 功能六、修改卡片↑
+// 功能九、修改卡片↑
 
-// 功能六、获取卡片↓
+// 功能十、获取卡片↓
 router.get('/card/get', (req, res) => {
   let token = req.headers.token
   let userId = main.token.toUserId(token)
@@ -272,13 +345,65 @@ router.get('/card/get', (req, res) => {
     })
   }
 })
-// 功能六、获取卡片↑
+// 功能十、获取卡片↑
 
-// 功能六、交换卡片位置↓
+// 功能十一、交换卡片位置↓
 router.put('/card/exchange', (req, res) => {
 })
-// 功能六、交换卡片位置↑
+// 功能十一、交换卡片位置↑
+
+// 功能十二、卡片添加到某分类下↓
+router.put('/card/toClass', (req, res) => {
+  let userId = main.token.toUserId(req.headers.token)
+  let obj = req.body; // 获取post请求的数据
+  let classId = obj.classId // 分类Id
+  let webId = obj.webId // webId
+
+  if (!classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+    return
+  }
+  if (!webId) {
+    res.send({ code: -1, msg: 'webId不可为空' });
+    return
+  }
+
+  var sql = `INSERT INTO class_details VALUES (NULL,?,?,?)`;
+  pool.query(sql, [classId, userId, webId], (err, result) => {
+    if (err) throw err;
+
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
+    } else {
+      res.send({ code: 1, msg: '添加失败 w( ゜Д ゜)w' });
+    }
+  });
+})
+// 功能十二、卡片添加到某分类下↑
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // 分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线----------------------分割线
+
+
+
+
+
+
+
 
 
 

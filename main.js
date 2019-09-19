@@ -5,8 +5,16 @@ const host = '127.0.0.1' // 数据库ip
 const corsHost = ['127.0.0.1', 'localhost'] // 跨域白名单 ip 域名
 const adoptPath = ['/user/login', '/user/checkUserNamePhoneEmail', '/user/register', '/user/verificationCode', '/user/forgetPassword'] // 无需携带token即可访问的 路由
 
+// 字符串处理
+const str = {
+  trim: function (str) { // 删除开头和结尾的空字符
+    return str.replace(/^\s+|\s+$/g, '');
+  }
+}
+
 // 正则
 const reg = {
+  url: /[a-zA-z]+:\/\/[^\s]*/,
   email: /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/,
   phone: /^1([3-9][0-9]|4[579]|5[0-3,5-9]|6[6]|7[0135678]|9[89])\d{8}$/
 }
@@ -380,6 +388,7 @@ module.exports = {
   host,
   corsHost,
   adoptPath,
+  str,
   reg,
   random,
   verificationCode,

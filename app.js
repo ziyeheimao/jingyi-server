@@ -10,8 +10,6 @@ const main = require('./main.js')
 // 路由
 const user = require('./routes/user.js'); // 用户模块
 const ctn = require('./routes/ctn.js'); // 内容模块
-const file = require('./routes/file.js'); // 文件模块
-const worm = require('./routes/worm.js'); // 爬虫模块
 
 // 创建web服务器
 var server = express();
@@ -49,7 +47,7 @@ server.use(cors({
 // 托管静态资源到public目录下
 server.use(express.static('public'));
 
-// body-parser配置 
+// body-parser配置
 // server.use(bodyParser.urlencoded({ // 解析原生表单 post请求主体数据
 //   extnded: false // 使用querystring解析数据
 // }));
@@ -61,5 +59,3 @@ server.use(main.middleware.power) // 自定义中间件 权限
 
 server.use('/user', user); // 用户模块
 server.use('/ctn', ctn); // 内容模块
-server.use('/file', file); // 文件模块
-server.use('/worm', worm); // 爬虫模块
