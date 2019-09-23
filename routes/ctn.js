@@ -1,8 +1,12 @@
 const express = require('express');
+const cheerio = require("cheerio"); // 模拟jq获取节点组件
+// const fs = require('fs');           // 文件管理模块
+
 const pool = require('../pool.js');
 const main = require('../main.js'); // 工具类
 const file = require('../file.js'); // 文件模块
 const worm = require('../worm.js'); // 爬虫模块
+
 
 var router = express.Router();        //创建空路由
 
@@ -183,6 +187,8 @@ router.post('/card/add', (req, res) => {
   let webImgUrl = obj.webImgUrl // LOGO图片链接
   let webName = obj.webName // 网页名称
 
+  let keyword = '' // 关键字
+
   if (classId !== 0 && !classId) {
     res.send({ code: -1, msg: 'classId不可为空' });
     return
@@ -192,26 +198,39 @@ router.post('/card/add', (req, res) => {
     return
   }
 
-  let data = { userId, classId, webUrl, description, webImgUrl, webName }
-
+  const storage = function () {
+    return new Promise(function (open, err) {
+      // 存入数据库
+      var sql = 'INSERT INTO `card` SET `userId`=?, `webName`=?, `webImgUrl`=?, `webUrl`=?, `description`=?, `keyword`=?'
+      pool.query(sql, [userId, webName, webImgUrl, webUrl, description, keyword], (err, result) => {
+        if (err) throw err;
+        //是否添加成功
+        if (result.affectedRows > 0) {
+          _async()
+        } else {
+          res.send({code: 1, msg: '发生未知错误保存失败 ( ゜Д゜)...'})
+        }
+      });
+    })
+  };
 
   // 查找刚添加的卡片的webId
-  let webId = ''
-  _get = function () {
+  let _webId = ''
+  const _get = function () {
     return new Promise((open, err) => {
-      let sql = `SELECT webId FROM card WHERE userId=? AND webUrl=?`;
+      let sql = `SELECT webId FROM card WHERE userId=? AND webUrl=? ORDER BY webId DESC;`;
       pool.query(sql, [userId, webUrl], (err, result) => {
         if (err) throw err;
-        webId = result[0].webId
+        _webId = result[0].webId
         open()
       })
     })
   }
 
   // 添加分类
-  _addClass = function () {
+  const _addClass = function () {
     let sql = `INSERT INTO class_details VALUES (NULL,?,?,?)`;
-    pool.query(sql, [classId, userId, webId], (err, result) => {
+    pool.query(sql, [classId, userId, _webId], (err, result) => {
       if (err) throw err;
       if (result.affectedRows > 0) {
         res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
@@ -221,25 +240,51 @@ router.post('/card/add', (req, res) => {
     });
   }
 
-  async = async function () {
+  const _async = async function () {
     await _get()
-    await _addClass()
+
+    if (classId !== 0) {
+      await _addClass()
+    } else {
+      res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' })
+    }
   }
 
+  // 从爬取结果中采集数据
+  webUrl = main.str.trim(webUrl)
+  let data = { webUrl, type: 'string', code: '' }
   worm.crawlWeb(data).then(res => {
-    console.log('爬虫模块结束', res)
+    var $ = cheerio.load(res); // 解析含有DOM节点的字符串
+    //从爬取结果中采集数据
+    if (!webName) {
+      $('title').each(function () {
+        webName = $(this).text();
+        console.log('网站标题', webName);
+      });
+    }
+    if (!description) {
+      $('meta[name=description]').each(function () {
+        description = $(this).attr('content');
+        console.log('网站简介', description);
+      });
+    }
+    if (!keyword) {
+      $('meta[name*=keyword]').each(function () {
+        keyword = $(this).attr('content');
+        console.log('关键字', keyword);
+      });
+    }
+    if (!webImgUrl) {
+      $('link[rel*=ico]').each(function () {
+        webImgUrl = $(this).attr('href'); // 绝对路径直接用
+        if (webImgUrl.indexOf('://') == -1) { // 相对路径 拼接 域名 + url
+          webUrl = webUrl + webImgUrl; // 懵一波 域名拼接路径
+          console.log('logo链接', webUrl);
+        };
+      })
+    }
+    storage() // 存储
   })
-  // if (worm.crawlWeb(data)) { // 需要添加分类
-  //   // 1.查刚刚添加的web
-  //   // 2.添加分类 send
-  //   console.log('爬虫模块结束,添加分类')
-  //   async()
-  // } else { // 不需要添加分类
-  //   console.log('爬虫模块结束,不添加分类')
-  //   // 直接send
-  //   res.send({code: 0, msg: '添加成功 []~(￣▽￣)~*'})
-  // }
-
 })
 // 功能六、新增卡片 json形式↑
 

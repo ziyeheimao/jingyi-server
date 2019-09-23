@@ -1,113 +1,38 @@
-const cheerio = require("cheerio");         // 模拟jq获取节点组件
-const iconv = require("iconv-lite");        // 解决乱码问题
+const iconv = require("iconv-lite");        // 解决(utf-8 以外编码导致的)乱码问题
 const request = require("request");         // 设置响应头，模拟请求
-// const fs = require('fs');                   // 文件管理模块
-const pool = require('./pool.js');          // 连接池
 const main = require('./main.js');          // 工具类
 
 
 // 添加卡片时，爬取对方网站数据↓
 const crawlWeb = function (data) {
-  let { userId, classId, webUrl, description, webImgUrl, webName } = data
-  let keyword = ''
-  webUrl = main.str.trim(webUrl)
-  description = main.str.trim(description)
-  webImgUrl = main.str.trim(webImgUrl)
-  webName = main.str.trim(webName)
+   // 域名 返回数据类型 需要的编码格式
+  let { webUrl, type, code } = data
 
-  console.log(userId, classId, webUrl, description, webImgUrl, webName)
   //爬虫程序
   var options = {
     url: webUrl
   };
-  function crawl () {
-    return new Promise(function (open, err) {
-      request(options).on('response', function (res) {//模拟请求
-        var chunks = [];    //盛放数组
-        res.on('data', function (chunk) { // 监听流的返回
-          chunks = chunks.concat(chunk); // 拼接流
-        })
-        res.on('end', function () { // 监听全部流返回结束时触发
-          chunks = chunks.toString(); // 转为字符串
-          var $ = cheerio.load(chunks); // 解析含有DOM节点的字符串
-          //从爬取结果中采集数据
-          if (!webName) {
-            $('title').each(function () {
-              webName = $(this).text();
-              console.log('网站标题', webName);
-            });
-          }
-          if (!description) {
-            $('meta[name=description]').each(function () {
-              description = $(this).attr('content');
-              console.log('网站简介', description);
-            });
-          }
-          if (!keyword) {
-            $('meta[name*=keyword]').each(function () {
-              keyword = $(this).attr('content');
-              console.log('关键字', keyword);
-            });
-          }
-          if (!webImgUrl) {
-            $('link[rel*=ico]').each(function () {
-              webImgUrl = $(this).attr('href'); // 绝对路径直接用
-              if (webImgUrl.indexOf('://') == -1) { // 相对路径 拼接 域名 + url
-                webUrl = webUrl + webImgUrl;
-                console.log('logo链接', webUrl);
-              };
-            })
-          }
-          open();
-        })
-      }).on('error', function (err) {
-        //Fs模块，生成运维日志写入txt文件中
-        console.log(err.message); // 打印错误日志
-        webName = null;           // 网站名
-        description = null;       // 链接
-        webImgUrl = null;         // 图片url
-        open();
+
+
+  return new Promise(function (open, e) {
+    request(options).on('response', function (res) {//模拟请求
+      var chunks = [];    //盛放数组
+      res.on('data', function (chunk) { // 监听流的返回
+        chunks = chunks.concat(chunk); // 拼接流
       })
-    })
-  }
-  function storage () {
-    return new Promise(function (open, err) {
-      // 存入数据库
-      var sql = 'INSERT INTO `card` SET `userId`=?, `webName`=?, `webImgUrl`=?, `webUrl`=?, `description`=?, `keyword`=?'
-      pool.query(sql, [userId, webName, webImgUrl, webUrl, description, keyword], (err, result) => {
-        if (err) throw err;
-        //是否添加成功
-        if (result.affectedRows > 0) {
-          if (classId === 0) {
-            open();
-          } else {
-            open();
-          }
-        } else {
-          open();
+      res.on('end', function () { // 监听全部流返回结束时触发
+
+        if (type === 'string' || type === 'string') {
+          chunks = chunks.toString(); // 转为字符串
         }
-      });
 
+        open(chunks);
+      })
+    }).on('error', function (err) {
+      console.log(err.message); // 打印错误日志
+      e();
     })
-  };
-  async = async function () {
-    try {
-      await crawl(); // 爬取
-      console.log('爬取结束')
-      await storage(); // 存储&send
-      console.log('存储结束')
-      return await { classId }
-    } catch (errMsg) {
-      console.log(errMsg);
-      res.send({ code: 1, msg: '当前域名无法爬取' });
-    }
-  }
-
-  if (async().classId === 0) {
-    return false // 不需要添加分类
-  } else {
-    return true // 添加分类
-  }
+  })
 }
 
 module.exports = {
@@ -238,12 +163,6 @@ router.post('/addCard', (req, res) => {
 
 })
 // 功能一、添加卡片时，爬取对方网站数据↑
-
-
-
-
-
-
 
 
 module.exports = router;
