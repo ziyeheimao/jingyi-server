@@ -13,24 +13,24 @@ const ctn = require('./routes/ctn.js'); // 内容模块
 
 // 创建web服务器
 var server = express();
-server.listen(666, function () {
-  console.log('web服务器创建成功,端口666（づ￣3￣）づ╭❤～');
+server.listen(main.serverPort, function () {
+  console.log(`web服务器创建成功,端口${main.serverPort}（づ￣3￣）づ╭❤～`);
 })
 
 // 跨域白名单配置
 server.use(cors({
   'credentials': true,
   'origin': [
-    `http://${main.corsHost[0]}:8080`,
-    `http://${main.corsHost[1]}:8080`,
-    `http://${main.corsHost[0]}:8081`,
-    `http://${main.corsHost[1]}:8081`,
-    `http://${main.corsHost[0]}:8082`,
-    `http://${main.corsHost[1]}:8082`,
-    `http://${main.corsHost[0]}:8083`,
-    `http://${main.corsHost[1]}:8083`,
-    `http://${main.corsHost[0]}:8084`,
-    `http://${main.corsHost[1]}:8084`
+    `${main.corsHost[0]}:8080`,
+    `${main.corsHost[1]}:8080`,
+    `${main.corsHost[0]}:8081`,
+    `${main.corsHost[1]}:8081`,
+    `${main.corsHost[0]}:8082`,
+    `${main.corsHost[1]}:8082`,
+    `${main.corsHost[0]}:8083`,
+    `${main.corsHost[1]}:8083`,
+    `${main.corsHost[0]}:8084`,
+    `${main.corsHost[1]}:8084`
   ]
 }));
 

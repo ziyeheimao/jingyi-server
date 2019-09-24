@@ -1,8 +1,11 @@
 const pool = require('./pool.js'); // 数据库 连接池
 
+const serverIp = 'http://127.0.0.1' // 后端服务器ip
+const serverPort = 666 // 服务器端口
 
-const host = '127.0.0.1' // 数据库ip
-const corsHost = ['127.0.0.1', 'localhost'] // 跨域白名单 ip 域名
+const DBHost = '127.0.0.1' // 数据库ip
+const corsHost = ['http://127.0.0.1', 'http://localhost'] // 跨域白名单 ip 域名
+
 const adoptPath = ['/user/login', '/user/checkUserNamePhoneEmail', '/user/register', '/user/verificationCode', '/user/forgetPassword'] // 无需携带token即可访问的 路由
 
 // 字符串处理
@@ -385,7 +388,9 @@ const transform = {
 }
 
 module.exports = {
-  host,
+  serverIp,
+  serverPort,
+  DBHost,
   corsHost,
   adoptPath,
   str,

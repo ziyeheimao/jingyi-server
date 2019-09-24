@@ -35,6 +35,7 @@ router.post('/upload', upload.single('mypic'), (req, res) => { //1、接口 2、
     res.send({ code: 302, msg: "只能上传( σ'ω')σ 图片喲~" });
     return;
   }
+
   // 5、创建一个新的图片文件
   var src = req.file.originalname;  //获取完整文件名
   var typename = src.slice(src.lastIndexOf('.'))  //获取文件后缀

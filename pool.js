@@ -3,7 +3,7 @@ const main = require('./main'); // 引入通用属性和方法
 
 // 创建连接池对象
 var pool = mysql.createPool({
-  host: main.host,
+  host: main.DBHost,
   port: '3306',
   user: 'root',
   password: '',

@@ -1,14 +1,14 @@
 const express = require('express');
-const cheerio = require("cheerio"); // 模拟jq获取节点组件
-// const fs = require('fs');           // 文件管理模块
+const cheerio = require("cheerio");      // 模拟jq获取节点组件
 
-const pool = require('../pool.js');
-const main = require('../main.js'); // 工具类
-const file = require('../file.js'); // 文件模块
-const worm = require('../worm.js'); // 爬虫模块
+const pool = require('../pool.js');     
+const main = require('../main.js');      // 工具类
+const worm = require('../worm.js');      // 爬虫模块
 
+const fs = require('fs');                // 文件管理
+const multer = require('multer');        // 文件上传
 
-var router = express.Router();        //创建空路由
+var router = express.Router();           // 创建空路由
 
 // 分类 ---------------------------------------------------------------------
 // 功能一、新增分类↓
@@ -153,8 +153,6 @@ router.put('/class/exchange', (req, res) => {
   let token = req.headers.token
   let userId = main.token.toUserId(token)
 
-  // console.log(sort1, sort2, classId1, classId2)
-  // console.log(typeof sort1, typeof sort2, typeof classId1, typeof classId2)
   var sql2 = `UPDATE class 
   SET sort = CASE classId 
   WHEN ? THEN ? 
@@ -198,7 +196,7 @@ router.post('/card/add', (req, res) => {
     return
   }
 
-  const storage = function () {
+  const _storage = function () {
     return new Promise(function (open, err) {
       // 存入数据库
       var sql = 'INSERT INTO `card` SET `userId`=?, `webName`=?, `webImgUrl`=?, `webUrl`=?, `description`=?, `keyword`=?'
@@ -216,7 +214,7 @@ router.post('/card/add', (req, res) => {
 
   // 查找刚添加的卡片的webId
   let _webId = ''
-  const _get = function () {
+  const _getWebId = function () {
     return new Promise((open, err) => {
       let sql = `SELECT webId FROM card WHERE userId=? AND webUrl=? ORDER BY webId DESC;`;
       pool.query(sql, [userId, webUrl], (err, result) => {
@@ -241,7 +239,7 @@ router.post('/card/add', (req, res) => {
   }
 
   const _async = async function () {
-    await _get()
+    await _getWebId()
 
     if (classId !== 0) {
       await _addClass()
@@ -259,19 +257,16 @@ router.post('/card/add', (req, res) => {
     if (!webName) {
       $('title').each(function () {
         webName = $(this).text();
-        console.log('网站标题', webName);
       });
     }
     if (!description) {
       $('meta[name=description]').each(function () {
         description = $(this).attr('content');
-        console.log('网站简介', description);
       });
     }
     if (!keyword) {
       $('meta[name*=keyword]').each(function () {
         keyword = $(this).attr('content');
-        console.log('关键字', keyword);
       });
     }
     if (!webImgUrl) {
@@ -279,17 +274,160 @@ router.post('/card/add', (req, res) => {
         webImgUrl = $(this).attr('href'); // 绝对路径直接用
         if (webImgUrl.indexOf('://') == -1) { // 相对路径 拼接 域名 + url
           webUrl = webUrl + webImgUrl; // 懵一波 域名拼接路径
-          console.log('logo链接', webUrl);
         };
       })
     }
-    storage() // 存储
+    _storage() // 存储
   })
 })
 // 功能六、新增卡片 json形式↑
 
 // 功能七、新增卡片 文件形式↓
-// /ctn/card/upload -------------------------------------------------------------------------------------
+const upload = multer({ dest: 'upload/' }); // 1、创建multer对象 创建目录upload
+router.post('/card/upload', upload.single('file'), (req, res) => { // 2、接收用户上传文件的请求post //1、接口 2、文件的属性名 原生表单中的name属性值 3、回调函数
+
+  let userId = main.token.toUserId(req.headers.token)
+
+  let size = req.file.size / 1024 / 1024;      // 默认单位字节 // 3、判断大小 最大2MB
+  let type = req.file.mimetype;                // 4、判断文件类型必须是图片
+  let obj = req.body;                          // 获取post请求的数据
+
+  let classId = Number(obj.classId) // 分类Id
+  let webUrl = obj.webUrl // 域名
+
+  let description = obj.description // 简介
+  let webImgUrl = obj.webImgUrl // LOGO图片链接
+  let webName = obj.webName // 网页名称
+
+  let keyword = '' // 关键字
+
+  if (req.file === undefined) {
+    res.send({ code: -1, msg: '图片不可为空' })
+    return
+  }
+  if (size > 1) {
+    res.send({ code: 1, msg: "上传图片过大，最大1MB(・-・*)" }) // 3.图片尺寸
+    return
+  }
+  if (classId !== 0 && !classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+    return
+  }
+  if (!webUrl) {
+    res.send({ code: -1, msg: 'webUrl不可为空' });
+    return
+  }
+  if (type.indexOf('image') == -1) { // 4.判断文件类型名称是否含有image
+    res.send({ code: 1, msg: "只能上传( σ'ω')σ 图片喲~" });
+    return;
+  }
+
+  // 5.1 从爬取结果中 <采集数据>
+  const _collect = function () {
+    webUrl = main.str.trim(webUrl)
+    let data = { webUrl, type: 'string', code: '' }
+    worm.crawlWeb(data).then(res => {
+      var $ = cheerio.load(res); // 解析含有DOM节点的字符串
+      // 从爬取结果中采集数据
+      if (!webName) {
+        $('title').each(function () {
+          webName = $(this).text();
+        });
+      }
+      if (!description) {
+        $('meta[name=description]').each(function () {
+          description = $(this).attr('content');
+        });
+      }
+      if (!keyword) {
+        $('meta[name*=keyword]').each(function () {
+          keyword = $(this).attr('content');
+        });
+      }
+      _async()
+    })
+  }
+
+  // 5.2 <创建卡片> 将采集的数据存入数据库
+  const _storage = function () {
+    return new Promise((open, e) => {
+      var sql = 'INSERT INTO `card` SET `userId`=?, `webName`=?, `webImgUrl`=?, `webUrl`=?, `description`=?, `keyword`=?'
+      pool.query(sql, [userId, webName, webImgUrl, webUrl, description, keyword], (err, result) => {
+        if (err) throw err;
+
+        if (result.affectedRows > 0) {
+          open()
+        } else {
+          res.send({code: 1, msg: '发生未知错误保存失败 ( ゜Д゜)...'})
+        }
+      });
+    })
+  };
+
+  // 5.3 <获取webId> 查找刚添加的卡片的webId
+  let _webId = ''
+  const _getWebId = function () {
+    return new Promise((open, e) => {
+      let sql = `SELECT webId FROM card WHERE userId=? AND webUrl=? ORDER BY webId DESC;`;
+      pool.query(sql, [userId, webUrl], (err, result) => {
+        if (err) throw err;
+        _webId = result[0].webId
+        open()
+      })
+    })
+  }
+
+  // 5.4 <生成图片> 创建一个新的图片文件
+  let src = req.file.originalname;  // 获取完整文件名
+  let _typeName = src.slice(src.lastIndexOf('.'))  // 获取文件后缀
+  const _createCardImg = function () {
+    let newPath = `./public/static/ctnPic/webId${_webId}Pic${_typeName}`;  // 拼接新文件存放的路径及文件名
+    fs.renameSync(req.file.path, newPath); // 6、将临时文件移动到public目录下
+  }
+
+  // 5.4 <更新数据> 更新数据库中卡片数据(图片链接)
+  const _upData = function () {
+    return new Promise((open, e) => {
+      // 6.5、修改刚新增的卡片 imgUrl 地址
+      webImgUrl = `${main.serverIp}:${main.serverPort}/static/ctnPic/webId${_webId}Pic${_typeName}` // 路径
+      pool.query("UPDATE card SET webImgUrl=? WHERE webId=?", [webImgUrl, _webId], (err, result) => {
+        if (err) throw err;
+
+        if (result.affectedRows > 0) {
+          res.send({code: 0,msg: '卡片创建成功 ψ(｀∇´)ψ'}); // 7、返回上传成功消息即可
+        }
+        open()
+      });
+    })
+  }
+
+  // 5.4 <添加分类> (如果有)
+  const _addClass = function () {
+    let sql = `INSERT INTO class_details VALUES (NULL,?,?,?)`;
+    pool.query(sql, [classId, userId, _webId], (err, result) => {
+      if (err) throw err;
+      // if (result.affectedRows > 0) {
+      //   res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
+      // } else {
+      //   res.send({ code: 1, msg: '添加失败 w( ゜Д ゜)w' });
+      // }
+    });
+  }
+
+  const _async = async function () {
+    await _storage() // 2
+    await _getWebId() // 3
+
+    _createCardImg() // 4
+    await _upData() // 4
+
+    if (classId !== 0) {
+      _addClass() // 4
+    }
+  }
+
+  _collect()
+})
 // 功能七、新增卡片 文件形式↑
 
 // 功能八、删除卡片↓
