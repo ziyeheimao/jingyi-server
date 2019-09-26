@@ -10,7 +10,7 @@ const multer = require('multer');        // 文件上传
 
 var router = express.Router();           // 创建空路由
 
-// 分类 ---------------------------------------------------------------------
+// 分类 ↓ -------------------------------------------------------------------------------------
 // 功能一、新增分类↓
 router.post('/class/add', (req, res) => {
   let obj = req.body; // 获取post请求的数据
@@ -171,7 +171,7 @@ router.put('/class/exchange', (req, res) => {
 })
 // 功能五、交换分类位置↑
 
-// 卡片 ---------------------------------------------------------------------
+// 卡片 ↓ -------------------------------------------------------------------------------------
 // 功能六、新增卡片 json形式↓
 router.post('/card/add', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
@@ -430,8 +430,81 @@ router.post('/card/upload', upload.single('file'), (req, res) => { // 2、接收
 })
 // 功能七、新增卡片 文件形式↑
 
-// 功能八、删除卡片↓
+// 功能八、删除卡片(全部标签下)↓
 router.delete('/card/del', (req, res) => {
+  let userId = main.token.toUserId(req.headers.token)
+  var obj = req.query;
+  let webId = obj.webId;
+
+  let speedProgress = 0;                                    // 进度
+
+  if (!webId) {
+    res.send({ code: -1, msg: 'webId不可为空' });
+    return
+  }
+
+  // 当前进度处理
+  function _speedProgress () {
+    speedProgress += 50
+    if (speedProgress === 100) {
+      _delCard()
+    }
+  }
+
+  // 1批量删除分类
+  function _delCardClass () {
+    let sql = 'DELETE FROM `class_details` WHERE fk_webId=? AND userId=?'
+    pool.query(sql, [webId, userId], (err, result) => {
+      if (err) throw err;
+      _speedProgress()
+    })
+  }
+
+  // 1查询当前卡片 根据imgUrl 判断该卡片是否有对应的logo图片文件 有则删除文件
+  function _delCardFile () {
+    let sql = `SELECT * FROM card WHERE webId=? AND userId=?`;
+    pool.query(sql, [webId, userId], (err, result) => {
+      if (err) throw err;
+      if (result.length > 0) {
+        if (result[0].webImgUrl.indexOf(`${main.serverIp}:${main.serverPort}/static/ctnPic`) !== -1) { // 有logo文件
+          // 服务器文件相对路径
+          var filePath = './public/' + result[0].webImgUrl.split(`${main.serverPort}/`)[1];
+
+          let exist = fs.existsSync(filePath) // 同步判断有没有文件 返回布尔
+          if (exist) {
+            fs.unlink(filePath, function(err) { // 异步删除文件
+              if (err) {
+                throw err;
+              }
+              console.log('文件:'+filePath+'删除成功！');
+              _speedProgress()
+            })
+          } else {
+            _speedProgress()
+          }
+        } else { // 无logo文件
+          _speedProgress()
+        }
+      }
+    })
+  }
+
+  // 2删除卡片本身
+  function _delCard () {
+    var sql = 'DELETE FROM `card` WHERE webId=? AND userId=?';
+    pool.query(sql, [webId, userId], (err, result) => {
+      if (err) throw err;
+
+      if (result.affectedRows > 0) {
+        res.send({ code: 0, msg: '删除成功' });
+      } else {
+        res.send({ code: 1, msg: '删除失败' });
+      }
+    })
+  }
+
+  _delCardClass()
+  _delCardFile()
 })
 // 功能八、删除卡片↑
 
@@ -564,12 +637,38 @@ router.put('/card/toClass', (req, res) => {
 })
 // 功能十二、卡片添加到某分类下↑
 
+// 功能十三、卡片移动到某分类下↓
+router.put('/card/addClass', (req, res) => {
 
+})
+// 功能十三、卡片移动到某分类下↑
 
+// 功能十三、删除卡片的某个分类↓
+router.delete('/card/delClass', (req, res) => {
+  let userId = main.token.toUserId(req.headers.token)
+  var obj = req.query;
+  let webId = obj.webId;
+  let classId = obj.classId;
+  if (!webId) {
+    res.send({ code: -1, msg: 'webId不可为空' });
+    return
+  }
+  if (!classId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+    return
+  }
 
-
-
-
+  var sql = 'DELETE FROM `class_details` WHERE fk_webId=? AND classId=? AND userId=?';
+  pool.query(sql, [webId, classId, userId], (err, result) => {
+    if (err) throw err;
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '删除成功' });
+    } else {
+      res.send({ code: 1, msg: '删除失败' });
+    }
+  })
+})
+// 功能十三、删除卡片的某个分类↑
 
 
 
@@ -590,126 +689,6 @@ router.put('/card/toClass', (req, res) => {
 
 
 
-
-
-
-
-
-// 功能一、（uid+uname）用户信息检验接口↓
-router.post('/IdentityCheck', (req, res) => {
-  var obj = req.body;
-
-  var $uname = obj.uname;                //昵称
-  var $uid = obj.uid;                    //ID
-
-  if (!$uname) {
-    res.send({ code: 401, msg: '昵称不可为空 -`д´-' });
-    return;
-  }
-  if (!$uid) {
-    res.send({ code: 402, msg: 'uid不可为空 ┐(´д`)┌' });
-    return;
-  }
-  var sql = "SELECT `uid` FROM `user_info` WHERE `uname`= ? AND `uid`=?";
-  pool.query(sql, [$uname, $uid], (err, result) => {
-    if (err) throw err;
-    if (result.length > 0) {
-      res.send({ code: 200, msg: '验证通过(๑•̀ㅂ•́)و✧' });
-    } else {
-      res.send({ code: 301, msg: '验证未通过，请尝试重新登陆( ｀д′)' });
-    }
-  })
-})
-// 功能一、（uid+uname）用户信息检验接口↑
-
-// 功能二、首页内容————全部标签加载（分页）↓ (首页默认加载的内容)
-router.get('/all', (req, res) => {
-  var obj = req.query;                 //获取get请求数据
-  var $uid = obj.uid;                  //uid
-  var pageIndex = obj.pageIndex;       //当前页码
-  var pageSize = 12;                   //页大小12
-  var pageCount = 1;                   //总页数
-  var cardCount = 1;
-  var speedOfProgress = 0;             //查询进度
-  var obj = { code: 200 };              //用于存储返回值
-
-  if (!$uid) {
-    res.send({ code: 401, msg: "身份验证失败，请重新登录 ( ´ﾟДﾟ`)" });
-    return;
-  }
-  if (!pageIndex) {                      //如果页码为空，默认第一页
-    pageIndex = 1;
-  }
-  // if(!pageSize){pageSize = 12;}
-
-  //2:验证正则表达式
-  var reg = /^[0-9]{1,}$/;
-  if (!reg.test(pageIndex)) {
-    res.send({ code: 401, msg: "页码格式不正确 (╯￣Д￣)╯╘═╛" });
-    return;
-  }
-  // if(!reg.test(pageSize)){
-  //   res.send({code:402,msg:"页大小格式不正确"});
-  //   return;
-  // }
-
-  // 聚合函数求和
-  var sql = "SELECT count(wid) AS pageCount FROM web WHERE uid=?";
-  pool.query(sql, [$uid], (err, result) => {
-    if (err) throw err;
-    // console.log('当前用户网站总个数',result);
-    // 总页数 = 内容数量/页大小
-    pageCount = Math.ceil(result[0].pageCount / pageSize);
-    cardCount = result[0].pageCount;
-    obj.cardCount = cardCount;                     //卡片总数量
-    obj.pageCount = pageCount;
-    speedOfProgress += 50;                         //sql执行进度
-    if (speedOfProgress == 100) {
-      res.send(obj);
-    }
-  });
-
-
-  var sql = "SELECT `wangzhan`, `imgurl`, `yuming`, `jianjie`, `wid` FROM web WHERE uid=? limit ?,?";
-  pool.query(sql, [$uid, (pageIndex - 1) * pageSize, pageSize], (err, result) => {
-    if (err) throw err;
-    if (result.length > 0) {
-      speedOfProgress += 50;                         //sql执行进度
-      if (speedOfProgress == 100) {
-        obj.result = result
-        res.send(obj);
-      }
-
-    } else {
-      obj.code = 301;
-      obj.msg = '您还没有添加任何网站 ๑乛◡乛๑'
-      res.send(obj);
-    }
-  })
-
-})
-// 功能二、首页内容————全部标签加载（分页）↑ (首页默认加载的内容)
-
-// 功能三、首页分类栏的的动态加载↓
-router.get('/class', (req, res) => {
-  var obj = req.query;                 //获取get请求数据
-  var $uid = obj.uid;                   //uid
-  if (!$uid) {
-    res.send({ code: 401, msg: "身份验证失败，请重新登录 ( ´ﾟДﾟ`)" });
-    return;
-  }
-  var sql = 'SELECT `class`, `cid` FROM `class` WHERE `uid`=?';
-  pool.query(sql, [$uid], (err, result) => {
-    if (err) throw err;
-    if (result.length > 0) {
-      res.send({ code: 200, msg: '分类信息获取成功', result });
-    } else {
-      res.send({ code: 301, msg: '您还没有创建任何分类' });
-    }
-
-  })
-})
-// 功能三、首页分类栏的的动态加载↑
 
 // 功能四、卡片位置的交换↓
 router.post('/swop', (req, res) => {
@@ -846,26 +825,6 @@ router.post('/cardUpdate', (req, res) => {
 
 })
 // 功能五、卡片内容的修改↓
-
-
-// 功能六、卡片的删除↓
-router.post('/cardDelete', (req, res) => {
-  var obj = req.body;
-  var $wid = obj.wid;
-  var $uid = obj.uid;
-  var sql = 'DELETE FROM web WHERE wid=? AND uid=?';
-  pool.query(sql, [$wid, $uid], (err, result) => {
-    if (err) throw err;
-    if (result.affectedRows > 0) {
-      res.send({ code: 200, msg: '删除成功' });
-    } else {
-      res.send({ code: 401, msg: '删除失败' });
-    }
-
-  })
-
-})
-// 功能六、卡片的删除↑
 
 
 // 功能七、向分类中添加卡片↓
