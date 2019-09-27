@@ -114,7 +114,7 @@ router.put('/class/updata', (req, res) => {
   }
   let userId = main.token.toUserId(req.headers.token)
 
-  var sql = 'UPDATE `class` SET `className`=? WHERE userId=? AND classId=?';   // 备选
+  var sql = 'UPDATE `class` SET `className`=? WHERE userId=? AND classId=?';
   pool.query(sql, [className, userId, classId], (err, result) => {
     if (err) throw err;
 
@@ -608,8 +608,42 @@ router.put('/card/exchange', (req, res) => {
 })
 // 功能十一、交换卡片位置↑
 
-// 功能十二、卡片添加到某分类下↓
+// 功能十二、卡片移动到某分类下↓
 router.put('/card/toClass', (req, res) => {
+  let userId = main.token.toUserId(req.headers.token)
+  let obj = req.body; // 获取post请求的数据
+  let toClassId = obj.toClassId // 新分类Id
+  let fromClassId = obj.fromClassId // 原分类Id
+  let webId = obj.webId // webId
+
+  if (fromClassId === 0) {
+    res.send({ code: -1, msg: '全部下的标签不可移动 ┑(￣Д ￣)┍ ' });
+    return
+  }
+
+  if (!toClassId) {
+    res.send({ code: -1, msg: 'classId不可为空' });
+    return
+  }
+  if (!webId) {
+    res.send({ code: -1, msg: 'webId不可为空' });
+    return
+  }
+  var sql = 'UPDATE `class_details` SET `classId`=? WHERE fk_webId=? AND userId=?';   // 备选
+  pool.query(sql, [toClassId, webId, userId], (err, result) => {
+    if (err) throw err;
+
+    if (result.affectedRows > 0) {
+      res.send({ code: 0, msg: '卡片修改成功 (๑•̀ㅂ•́)و✧' });
+    } else {
+      res.send({ code: 1, msg: '卡片修改失败 ┑(￣Д ￣)┍ ' });
+    }
+  })
+})
+// 功能十二、卡片移动到某分类下↑
+
+// 功能十三、卡片添加到某分类下↓
+router.put('/card/addClass', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   let obj = req.body; // 获取post请求的数据
   let classId = obj.classId // 分类Id
@@ -635,13 +669,7 @@ router.put('/card/toClass', (req, res) => {
     }
   });
 })
-// 功能十二、卡片添加到某分类下↑
-
-// 功能十三、卡片移动到某分类下↓
-router.put('/card/addClass', (req, res) => {
-
-})
-// 功能十三、卡片移动到某分类下↑
+// 功能十三、卡片添加到某分类下↑
 
 // 功能十三、删除卡片的某个分类↓
 router.delete('/card/delClass', (req, res) => {
