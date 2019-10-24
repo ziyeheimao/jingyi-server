@@ -35,15 +35,17 @@ router.post('/login', (req, res) => {
   } else {
     sql = 'SELECT * FROM user_info WHERE userName=? AND password=md5(?)'
   }
-  //执行SQL语句，查看是否登录成功（使用用户名和密码两个条件能查询到数据）
+  //执行SQL语句，查看是否登录成功 使用用户名和密码两个条件能查询到数据
   pool.query(sql, [field, password], (err, result) => {
     if (err) throw err;
     //判断查询的结果（数组）长度是否大于0 大于0，说明查询到数据，有这个用户登录成功
 
-    let token = main.token.create(result[0])
+    let data = result[0]
+    let token = main.token.create(data)
+
 
     if (result.length > 0) {
-      res.send({ code: 0, msg: '欢迎回家', result, token });
+      res.send({ code: 0, msg: '欢迎回家', data, token });
     } else {
       res.send({ code: 1, msg: '账号或密码错误' });
     }
@@ -238,7 +240,17 @@ router.put('/forgetPassword', (req, res) => {
 // 功能五、忘记密码 ↑
 
 
-
+// 功能六、通过token获取用户信息
+router.get(`/getUserInfo`, (req, res) => {
+  let userId = main.token.toUserId(req.headers.token)
+  main.user.get(userId).then(res_ => {
+    if (res_ === false) {
+      res.send({code: 1, msg: `并未发现userId为:${userId}的用户 ┑(￣Д ￣)┍`})
+      return
+    }
+    res.send({code: 0, res_})
+  })
+})
 
 
 

@@ -10,6 +10,9 @@ const main = require('./main.js')
 // 路由
 const user = require('./routes/user.js'); // 用户模块
 const ctn = require('./routes/ctn.js'); // 内容模块
+// const ctn = require('./routes/ctn.js'); // 管理模块
+const other = require('./routes/other.js'); // 其它接口
+
 
 // 创建web服务器
 var server = express();
@@ -59,3 +62,5 @@ server.use(main.middleware.power) // 自定义中间件 权限
 
 server.use('/user', user); // 用户模块
 server.use('/ctn', ctn); // 内容模块
+// server.use('/ctn', ctn); // 管理模块
+server.use('/other', other); // 其它接口

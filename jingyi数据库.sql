@@ -12,16 +12,13 @@ CREATE TABLE user_info(
     userName VARCHAR(32) UNIQUE,                            #用户昵称唯一约束
     password VARCHAR(128) NOT NULL,                         #密码 md5散列算法 不可为空
 
-    occupationCode VARCHAR(9),                              #职业代码 按类型编码  9位数 前三位行业 中三位职业 后三位岗位 不清楚的位默认000
-    occupationName VARCHAR(50),                             #职业名称 按类型编码  9位数 前三位行业 中三位职业 后三位岗位 不清楚的位默认000
+    occupationCode VARCHAR(9),                              #行业代码
+    -- 职业代码
+    -- 岗位代码
 
     provinceCode VARCHAR(6),                                #省级代码
     cityCode VARCHAR(6),                                    #市级代码
     regionCode VARCHAR(6),                                  #区县代码
-
-    provinceName VARCHAR(32),                               #省级名称
-    cityName VARCHAR(32),                                   #市级名称
-    regionName VARCHAR(32),                                 #区县名称
 
     sex TINYINT,                                            #性别布尔值 0保密 1男 2女
     userPicUrl VARCHAR(512),                                #头像地址
@@ -31,15 +28,18 @@ CREATE TABLE user_info(
 
 #向用户表插入数据
 INSERT INTO user_info VALUES
-(NULL,"819405241@qq.com","15231291161","箫",md5("4869"),NULL,'程序员',NULL,NULL,NULL,NULL,NULL,NULL,1,"http://127.0.0.1:666/static/userPic/1_Pic.gif",28800000),
-(NULL,"819405242@qq.com","15231291162","筱竹听雨",md5("4869"),NULL,'医生',NULL,NULL,NULL,NULL,NULL,NULL,2,"http://127.0.0.1:666/static/userPic/2_Pic.gif",28800000),
-(NULL,"819405243@qq.com","15231291163","子夜黑猫",md5("4869"),NULL,'会计',NULL,NULL,NULL,NULL,NULL,NULL,2,"http://127.0.0.1:666/static/userPic/2_Pic.gif",28800000),
-(NULL,"819405244@qq.com","15231291164","箫羽叶",md5("4869"),NULL,'裁缝',NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
-(NULL,"819405245@qq.com","15231291165","战神无双",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
-(NULL,"819405246@qq.com","15231291166","麦克斯韦的妖精",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
-(NULL,"819405247@qq.com","15231291167","棍+球=糖葫芦",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,2,NULL,28800000),
-(NULL,"819405248@qq.com","15231291168","halihali",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000),
-(NULL,"819405249@qq.com","15231291169","bilibili",md5("4869"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,28800000);
+(NULL,"819405241@qq.com","15231291161","箫",md5("4869"),NULL,NULL,NULL,NULL,1,"http://127.0.0.1:666/static/userPic/1_Pic.gif",28800000),
+(NULL,"819405242@qq.com","15231291162","筱竹听雨",md5("4869"),NULL,NULL,NULL,NULL,2,"http://127.0.0.1:666/static/userPic/2_Pic.gif",28800000),
+(NULL,"819405243@qq.com","15231291163","子夜黑猫",md5("4869"),NULL,NULL,NULL,NULL,2,"http://127.0.0.1:666/static/userPic/2_Pic.gif",28800000),
+(NULL,"819405244@qq.com","15231291164","箫羽叶",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405245@qq.com","15231291165","战神无双",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405246@qq.com","15231291166","麦克斯韦的妖精",md5("4869"),NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405247@qq.com","15231291167","棍+球=糖葫芦",md5("4869"),NULL,NULL,NULL,NULL,2,NULL,28800000),
+(NULL,"819405248@qq.com","15231291168","halihali",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405250@qq.com","15231291169","bilibili",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405251@qq.com","15231291170","dilidili",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000),
+(NULL,"819405252@qq.com","15231291171","zilizili",md5("4869"),NULL,NULL,NULL,NULL,0,NULL,28800000);
+
 
 
 #网址表 由用户提交

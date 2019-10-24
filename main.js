@@ -383,6 +383,7 @@ const user = {
 
 // 转换数据
 const transform = {
+  // 分页查询 page 转 start
   page: function (page, limit) {
     return (page - 1) * limit
   }
@@ -401,5 +402,6 @@ module.exports = {
   token,
   date,
   middleware,
+  user,
   transform
 }
