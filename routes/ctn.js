@@ -11,7 +11,7 @@ const multer = require('multer');        // 文件上传
 var router = express.Router();           // 创建空路由
 
 // 分类 ↓ -------------------------------------------------------------------------------------
-// 功能一、新增分类↓
+// 1、新增分类↓
 router.post('/class/add', (req, res) => {
   let obj = req.body; // 获取post请求的数据
   let className = obj.className;
@@ -20,8 +20,7 @@ router.post('/class/add', (req, res) => {
     return
   }
   let userId = main.token.toUserId(req.headers.token)
-
-  let max = null
+  let sort = null
 
   const _get = function () {
     return new Promise((resolve, reject) => {
@@ -57,7 +56,7 @@ router.post('/class/add', (req, res) => {
   const _add = function () {
     return new Promise((resolve, reject) => {
       let sql = `INSERT INTO class VALUES (NULL,?,?,?)`;
-      pool.query(sql, [userId, className, max], (err, result) => {
+      pool.query(sql, [userId, className, sort], (err, result) => {
         if (err) throw err;
         if (result.affectedRows > 0) {
           res.send({ code: 0, msg: '添加成功 []~(￣▽￣)~*' });
@@ -75,9 +74,9 @@ router.post('/class/add', (req, res) => {
   }
   _async()
 })
-// 功能一、新增分类↑
+// 1、新增分类↑
 
-// 功能二、删除分类↓
+// 2、删除分类↓
 router.delete('/class/del', (req, res) => {
   var obj = req.query;
   let classId = obj.classId;
@@ -97,9 +96,9 @@ router.delete('/class/del', (req, res) => {
     }
   })
 })
-// 功能二、删除分类↑
+// 2、删除分类↑
 
-// 功能三、修改分类↓
+// 3、修改分类↓
 router.put('/class/updata', (req, res) => {
   let obj = req.body; // 获取post请求的数据
   let className = obj.className;
@@ -125,9 +124,9 @@ router.put('/class/updata', (req, res) => {
     }
   })
 })
-// 功能三、修改分类↑
+// 3、修改分类↑
 
-// 功能四、获取分类↓
+// 4、获取分类↓
 router.get('/class/get', (req, res) => {
   let token = req.headers.token
   let userId = main.token.toUserId(token)
@@ -138,9 +137,9 @@ router.get('/class/get', (req, res) => {
     res.send({code: 0, result})
   })
 })
-// 功能四、获取分类↑
+// 4、获取分类↑
 
-// 功能五、交换分类位置↓
+// 5、交换分类位置↓
 router.put('/class/exchange', (req, res) => {
   let obj = req.body; // 获取post请求的数据
 
@@ -149,6 +148,23 @@ router.put('/class/exchange', (req, res) => {
 
   let classId1 = obj.classId1
   let classId2 = obj.classId2
+
+  if (!sort1) {
+    res.send({ code: -1, msg: 'sort1不可为空' })
+    return
+  }
+  if (!sort2) {
+    res.send({ code: -1, msg: 'sort2不可为空' })
+    return
+  }
+  if (!classId1) {
+    res.send({ code: -1, msg: 'classId1不可为空' })
+    return
+  }
+  if (!classId2) {
+    res.send({ code: -1, msg: 'classId2不可为空' })
+    return
+  }
 
   let token = req.headers.token
   let userId = main.token.toUserId(token)
@@ -169,10 +185,10 @@ router.put('/class/exchange', (req, res) => {
     }
   })
 })
-// 功能五、交换分类位置↑
+// 5、交换分类位置↑
 
 // 卡片 ↓ -------------------------------------------------------------------------------------
-// 功能六、新增卡片 json形式↓
+// 6、新增卡片 json形式↓
 router.post('/card/add', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
 
@@ -280,9 +296,9 @@ router.post('/card/add', (req, res) => {
     _storage() // 存储
   })
 })
-// 功能六、新增卡片 json形式↑
+// 6、新增卡片 json形式↑
 
-// 功能七、新增卡片 文件形式↓
+// 7、新增卡片 文件形式↓
 const upload = multer({ dest: 'upload/' }); // 1、创建multer对象 创建目录upload
 router.post('/card/upload', upload.single('file'), (req, res) => { // 2、接收用户上传文件的请求post //1、接口 2、文件的属性名 原生表单中的name属性值 3、回调函数
 
@@ -296,7 +312,7 @@ router.post('/card/upload', upload.single('file'), (req, res) => { // 2、接收
   let webUrl = obj.webUrl // 域名
 
   let description = obj.description // 简介
-  let webImgUrl = obj.webImgUrl // LOGO图片链接
+  let webImgUrl = null // LOGO图片链接
   let webName = obj.webName // 网页名称
 
   let keyword = '' // 关键字
@@ -428,9 +444,9 @@ router.post('/card/upload', upload.single('file'), (req, res) => { // 2、接收
 
   _collect()
 })
-// 功能七、新增卡片 文件形式↑
+// 7、新增卡片 文件形式↑
 
-// 功能八、删除卡片(全部标签下)↓
+// 8、删除卡片(全部标签下)↓
 router.delete('/card/del', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   var obj = req.query;
@@ -506,14 +522,14 @@ router.delete('/card/del', (req, res) => {
   _delCardClass()
   _delCardFile()
 })
-// 功能八、删除卡片↑
+// 8、删除卡片↑
 
-// 功能九、修改卡片↓
+// 9、修改卡片↓
 router.put('/card/updata', (req, res) => {
 })
-// 功能九、修改卡片↑
+// 9、修改卡片↑
 
-// 功能十、获取卡片↓
+// 10、获取卡片↓
 router.get('/card/get', (req, res) => {
   let token = req.headers.token
   let userId = main.token.toUserId(token)
@@ -601,14 +617,14 @@ router.get('/card/get', (req, res) => {
     })
   }
 })
-// 功能十、获取卡片↑
+// 10、获取卡片↑
 
-// 功能十一、交换卡片位置↓
+// 11、交换卡片位置↓
 router.put('/card/exchange', (req, res) => {
 })
-// 功能十一、交换卡片位置↑
+// 11、交换卡片位置↑
 
-// 功能十二、卡片移动到某分类下↓
+// 12、卡片移动到某分类下↓
 router.put('/card/toClass', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   let obj = req.body; // 获取post请求的数据
@@ -640,9 +656,9 @@ router.put('/card/toClass', (req, res) => {
     }
   })
 })
-// 功能十二、卡片移动到某分类下↑
+// 12、卡片移动到某分类下↑
 
-// 功能十三、卡片添加到某分类下↓
+// 13、卡片添加到某分类下↓
 router.put('/card/addClass', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   let obj = req.body; // 获取post请求的数据
@@ -669,9 +685,9 @@ router.put('/card/addClass', (req, res) => {
     }
   });
 })
-// 功能十三、卡片添加到某分类下↑
+// 13、卡片添加到某分类下↑
 
-// 功能十三、删除卡片的某个分类↓
+// 14、删除卡片的某个分类↓
 router.delete('/card/delClass', (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   var obj = req.query;
@@ -696,7 +712,7 @@ router.delete('/card/delClass', (req, res) => {
     }
   })
 })
-// 功能十三、删除卡片的某个分类↑
+// 14、删除卡片的某个分类↑
 
 
 
@@ -718,7 +734,7 @@ router.delete('/card/delClass', (req, res) => {
 
 
 
-// 功能四、卡片位置的交换↓
+// 卡片位置的交换↓
 router.post('/swop', (req, res) => {
 
   var obj = req.body;
@@ -826,10 +842,10 @@ router.post('/swop', (req, res) => {
   })();
 
 })
-// 功能四、卡片位置的交换↑
+// 卡片位置的交换↑
 
 
-// 功能五、卡片内容的修改↓
+// 卡片内容的修改↓
 router.post('/cardUpdate', (req, res) => {
   var obj = req.body;
 
@@ -852,10 +868,10 @@ router.post('/cardUpdate', (req, res) => {
   })
 
 })
-// 功能五、卡片内容的修改↓
+// 卡片内容的修改↓
 
 
-// 功能七、向分类中添加卡片↓
+// 向分类中添加卡片↓
 router.post('/classCardAdd', (req, res) => {
   var obj = req.body;
   var $cid = obj.cid;
@@ -873,11 +889,11 @@ router.post('/classCardAdd', (req, res) => {
     }
   });
 })
-// 功能七、向分类中添加卡片↑
+// 向分类中添加卡片↑
 
 
 // 先检查用户身份信息，后查询
-// 功能八、分类的分页、多表查询↓
+// 分类的分页、多表查询↓
 router.get('/classDetail', (req, res) => {
   var obj = req.query;
   var $uid = obj.uid;
@@ -961,7 +977,7 @@ router.get('/classDetail', (req, res) => {
 `SELECT * FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=1 AND class_details.cid=1`       //对结果进行条件uid cid（安右侧class_details）过滤之后的数据
 `SELECT * FROM web INNER JOIN class_details ON fk_wid=wid WHERE class_details.uid=1 AND class_details.cid=1 LIMIT 0,1`    //多表查询+条件过滤+分页 需要四个条件过滤：uid cid 分页：当前页 最大页
 */
-// 功能八、分类的分页、多表查询↑
+// 分类的分页、多表查询↑
 
 
 

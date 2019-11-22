@@ -11,20 +11,20 @@ const forgetPassword = function (email) {
     port: 465, // SMTP 端口
     secureConnection: true, // 使用了 SSL
     auth: {
-      user: '819405246@qq.com', // 你的邮箱
-      pass: 'hjiwykqkhbkebcdf', // 这里密码不是qq密码，是你设置的smtp授权码
+      user: 'jingyidaohang@qq.com', // 你的邮箱
+      pass: 'hxygvnxwqonzbfcc', // 这里密码不是qq密码，是你设置的smtp授权码
     }
   });
 
   let mailOptions = {
-    from: '"静逸导航" <819405246@qq.com>', // sender address 发件人与发件邮箱
+    from: '"静逸导航" <jingyidaohang@qq.com>', // sender address 发件人与发件邮箱
     to: `${email}`, // list of receivers 收件人
-    subject: '静逸导航 账户密码重置', // Subject line 标题
+    subject: `静逸导航 您的验证码为${randomStr}`, // Subject line 标题
     // 发送text或者html格式
     // text: '邮件内容', // plain text body
     html: `
       <p>
-        静逸导航 修改密码 验证码为:
+        静逸导航 您的验证码为:
         <b>${randomStr}</b>
       </p>` // html body
   };

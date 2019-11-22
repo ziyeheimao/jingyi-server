@@ -250,14 +250,19 @@ const middleware = {
     let url = req._parsedUrl.pathname // url // 获取用户访问的接口
     console.log(url)
 
-    if (url.indexOf('/static') !== -1) { // 访问静态资源时直接通过
-      return next()
+    let adopt = ['/static', '/login', '/checkUserNamePhoneEmail', '/register', '/verificationCode', '/forgetPassword']
+
+    for (let i of adopt) {
+      if (url.indexOf(i) !== -1) { // 访问静态资源或登录接口时 直接通过
+        console.log('url通过')
+        return next()
+      }
     }
 
     let process = 0 // 进度
     let userSetTimeStamp = null // 用户设置的token时效 时间戳
     let expireTimeStamp = null // 本次登录到期时间戳
-
+    console.log('检测token')
     // 检测是否携带token
     if (!token_) { // 没有token
       if (adoptPath.includes(url) === false) { // 且不在不携带token可访问的范围内
@@ -295,7 +300,6 @@ const middleware = {
                   res.send({code: 1001, msg: 'token已过期, 请重新登录'})
                 }
               }
-
               break
           }
 
@@ -354,6 +358,7 @@ const user = {
   
         if (result.length > 0) {
           res_ = result[0]
+          delete res_.password
         } else {
           res_ = false
         }

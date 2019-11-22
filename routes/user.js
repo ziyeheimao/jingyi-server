@@ -10,7 +10,7 @@ var router = express.Router();
 
 //添加路由
 
-// 功能一、用户登录 ↓
+// 1、用户登录 ↓
 router.post('/login', (req, res) => {
   var obj = req.body;
 
@@ -51,10 +51,10 @@ router.post('/login', (req, res) => {
     }
   });
 });
-// 功能一、用户登录 ↑
+// 1、用户登录 ↑
 
 
-// 功能二、检测 昵称 邮箱 手机 是否注册 ↓
+// 2、检测 昵称 邮箱 手机 是否注册 ↓
 router.get('/checkUserNamePhoneEmail', (req, res) => {
   var obj = req.query;
   var field = obj.field;
@@ -91,10 +91,10 @@ router.get('/checkUserNamePhoneEmail', (req, res) => {
     }
   })
 });
-// 功能二、检测 昵称 邮箱 手机 是否注册 ↑
+// 2、检测 昵称 邮箱 手机 是否注册 ↑
 
 
-// 功能三、用户注册 ↓
+// 3、用户注册 ↓
 router.post('/register', (req, res) => {
   var obj = req.body; //获取post请求的数据
 
@@ -135,10 +135,10 @@ router.post('/register', (req, res) => {
   });
 
 });
-// 功能三、用户注册 ↑
+// 3、用户注册 ↑
 
 
-// 功能四、获取验证码 ↓
+// 4、获取验证码 ↓
 router.get('/verificationCode', (req, res) => {
   var obj = req.query;
   var field = obj.field;
@@ -175,17 +175,17 @@ router.get('/verificationCode', (req, res) => {
     res.send({ code: 1, msg: '手机或邮箱格式不正确'})
   }
 })
-// 功能四、获取验证码 ↑
+// 4、获取验证码 ↑
 
 
-// 功能五、忘记密码 ↓
+// 5、忘记密码 ↓
 router.put('/forgetPassword', (req, res) => {
   var obj = req.body; //获取post请求的数据
   var field = obj.field; //手机或邮箱
   var password = obj.password; //新密码
   var verificationCode = obj.verificationCode
 
-  // 封装 更新函数
+  // 更新函数
   var update = function (field, password) {
     let sql = 'UPDATE user_info SET password=md5(?) WHERE '
 
@@ -237,10 +237,10 @@ router.put('/forgetPassword', (req, res) => {
     }
   })
 })
-// 功能五、忘记密码 ↑
+// 5、忘记密码 ↑
 
 
-// 功能六、通过token获取用户信息
+// 6、通过token获取用户信息
 router.get(`/getUserInfo`, (req, res) => {
   let userId = main.token.toUserId(req.headers.token)
   main.user.get(userId).then(res_ => {
@@ -251,7 +251,7 @@ router.get(`/getUserInfo`, (req, res) => {
     res.send({code: 0, res_})
   })
 })
-
+// 6、通过token获取用户信息
 
 
 
@@ -548,20 +548,6 @@ router.get('/logout', (req, res) => {
 router.get('/sessiondata', (req, res) => {
   res.send({ uid: req.session.loginUid, uname: req.session.loginUname });
 });
-
-// // 测试获取session判断身份
-// router.post('/session', (req,res) => {
-//   console.log(req.session)
-//   res.send({ msg: "查询成功" })
-// })
-
-// // 注销
-// router.get("/out",function(req,res){
-//   //注销session
-//   req.session.destroy()
-//   res.send({ msg: '登出成功' })
-//   // res.redirect("/login")//重定向定位到指定内容
-// })
 
 //导出路由器
 module.exports = router;
